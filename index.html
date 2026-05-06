@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia Móvil</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* ESTILOS BASE PARA MÓVIL */
         body {
@@ -49,7 +48,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             color: white;
             transition: background-color 0.2s;
-            -webkit-appearance: none; /* Mejora en iPhone */
+            -webkit-appearance: none;
         }
         button:active { opacity: 0.8; transform: scale(0.98); }
         
@@ -224,8 +223,8 @@
         }
     </style>
 </head>
-<!-- EL BODY ONLOAD GARANTIZA QUE ARRANQUE SÍ O SÍ -->
-<body onload="iniciarAplicacion()">
+<!-- Se quitó el onload del body para evitar bloqueos del navegador -->
+<body>
 
     <div class="controls">
         <input type="month" id="monthPicker" onchange="handleMonthChange()">
@@ -327,10 +326,13 @@
         <p style="text-align: center; color: #555; font-size: 14px;">Este documento es un detalle informativo generado automáticamente por el registro de asistencia.</p>
     </div>
 
+    <!-- Librería movida al final para evitar que bloquee la página -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script>
-        // Declarar variables globales
-        const daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; 
-        const monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        // JS Clásico (Universal) a prueba de errores de celular
+        var daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; 
+        var monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -338,26 +340,28 @@
         function parseNumber(str) {
             return parseInt(str.replace(/\./g, '')) || 0;
         }
+        function pad2(num) {
+            return (num < 10 ? '0' : '') + num;
+        }
 
         function formatInputSueldo(input) {
-            let val = parseNumber(input.value);
+            var val = parseNumber(input.value);
             input.value = formatNumber(val);
             calculateSalary();
         }
 
-        // --- SISTEMA SEGURO DE MEMORIA ---
-        const SafeStorage = {
+        var SafeStorage = {
             save: function(key, data) {
                 try {
                     localStorage.setItem(key, JSON.stringify(data));
                     return true;
                 } catch (e) {
-                    return false; // Falla silenciosamente si el celular bloquea la memoria
+                    return false; 
                 }
             },
             load: function(key) {
                 try {
-                    const item = localStorage.getItem(key);
+                    var item = localStorage.getItem(key);
                     return item ? JSON.parse(item) : null;
                 } catch (e) {
                     return null;
@@ -365,101 +369,94 @@
             }
         };
 
-        // --- INICIO DE LA APLICACIÓN (Arranca desde el body onload) ---
         function iniciarAplicacion() {
             try {
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = pad2(today.getMonth() + 1);
                 
-                const monthPicker = document.getElementById('monthPicker');
-                monthPicker.value = `${year}-${month}`;
+                var monthPicker = document.getElementById('monthPicker');
+                monthPicker.value = year + "-" + month;
                 
                 document.getElementById('local-status').innerText = "Iniciando tabla...";
                 handleMonthChange();
             } catch (error) {
-                // Si algo falla, lo mostramos en la pantalla para saber qué es
-                document.getElementById('local-status').innerText = "Error: " + error.message;
+                document.getElementById('local-status').innerText = "Error init: " + error.message;
             }
         }
 
         function handleMonthChange() {
             try {
-                const monthPicker = document.getElementById('monthPicker').value;
+                var monthPicker = document.getElementById('monthPicker').value;
                 if (!monthPicker) return;
 
-                const parts = monthPicker.split('-');
-                const year = parseInt(parts[0]);
-                const month = parseInt(parts[1]);
+                var parts = monthPicker.split('-');
+                var year = parseInt(parts[0], 10);
+                var month = parseInt(parts[1], 10);
                 
-                const totalDays = new Date(year, month, 0).getDate();
+                var totalDays = new Date(year, month, 0).getDate();
                 
-                document.getElementById('displayMonth').value = `${monthsInSpanish[month - 1]} ${year}`;
+                document.getElementById('displayMonth').value = monthsInSpanish[month - 1] + " " + year;
 
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = '';
+                var tbody = document.getElementById('tableBody');
+                var htmlContent = "";
 
-                for (let i = 1; i <= totalDays; i++) {
-                    const currentDate = new Date(year, month - 1, i);
-                    const dayOfWeek = currentDate.getDay();
-                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                for (var i = 1; i <= totalDays; i++) {
+                    var currentDate = new Date(year, month - 1, i);
+                    var dayOfWeek = currentDate.getDay();
+                    var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                    var classWeekend = isWeekend ? ' class="weekend"' : '';
+                    var routeValue = isWeekend ? '-' : 'San Miguel';
                     
-                    const tr = document.createElement('tr');
-                    if (isWeekend) tr.className = 'weekend';
+                    var selPresente = !isWeekend ? 'selected' : '';
+                    var selDescanso = isWeekend ? 'selected' : '';
 
-                    const routeValue = isWeekend ? '-' : 'San Miguel';
-                    const statusOptions = `
-                        <option value="Presente" ${!isWeekend ? 'selected' : ''}>Presente</option>
-                        <option value="Descanso" ${isWeekend ? 'selected' : ''}>Descanso</option>
-                        <option value="Ausente">Ausente</option>
-                        <option value="Feriado">Feriado</option>
-                        <option value="Fuera de Santiago">Fuera Stgo</option>
-                    `;
-
-                    tr.innerHTML = `
-                        <td class="export-hide" style="text-align: center; white-space: nowrap;">
-                            <input type="checkbox" onchange="toggleHighlight(this, 'yellow')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;">
-                            <input type="checkbox" onchange="toggleHighlight(this, 'red')" class="row-checkbox cb-red" style="accent-color: red;">
-                        </td>
-                        <td>${String(i).padStart(2, '0')}/${String(month).padStart(2, '0')}</td>
-                        <td>${daysInSpanish[dayOfWeek]}</td>
-                        <td><div contenteditable="true" class="editable-cell" onblur="saveDataLocally(true)">${routeValue}</div></td>
-                        <td>
-                            <select onchange="handleStatusChange(this)">${statusOptions}</select>
-                        </td>
-                        <td class="export-hide" style="text-align: center;">
-                            <button class="btn-copy" onclick="copyToNextRow(this)">⬇️</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
+                    htmlContent += '<tr' + classWeekend + '>';
+                    htmlContent += '<td class="export-hide" style="text-align: center; white-space: nowrap;">';
+                    htmlContent += '<input type="checkbox" onchange="toggleHighlight(this, \'yellow\')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;">';
+                    htmlContent += '<input type="checkbox" onchange="toggleHighlight(this, \'red\')" class="row-checkbox cb-red" style="accent-color: red;">';
+                    htmlContent += '</td>';
+                    htmlContent += '<td>' + pad2(i) + '/' + pad2(month) + '</td>';
+                    htmlContent += '<td>' + daysInSpanish[dayOfWeek] + '</td>';
+                    htmlContent += '<td><div contenteditable="true" class="editable-cell" onblur="saveDataLocally(true)">' + routeValue + '</div></td>';
+                    htmlContent += '<td><select onchange="handleStatusChange(this)">';
+                    htmlContent += '<option value="Presente" ' + selPresente + '>Presente</option>';
+                    htmlContent += '<option value="Descanso" ' + selDescanso + '>Descanso</option>';
+                    htmlContent += '<option value="Ausente">Ausente</option>';
+                    htmlContent += '<option value="Feriado">Feriado</option>';
+                    htmlContent += '<option value="Fuera de Santiago">Fuera Stgo</option>';
+                    htmlContent += '</select></td>';
+                    htmlContent += '<td class="export-hide" style="text-align: center;"><button class="btn-copy" onclick="copyToNextRow(this)">⬇️</button></td>';
+                    htmlContent += '</tr>';
                 }
+                
+                tbody.innerHTML = htmlContent;
 
                 loadDataLocally(monthPicker);
                 calculateSalary();
                 document.getElementById('local-status').innerText = "Lista generada correctamente";
-                setTimeout(() => { document.getElementById('local-status').innerText = "✅ Listo para usar"; }, 2000);
+                setTimeout(function(){ document.getElementById('local-status').innerText = "✅ Listo para usar"; }, 2000);
 
             } catch (error) {
                 document.getElementById('local-status').innerText = "Fallo en tabla: " + error.message;
             }
         }
 
-        // --- FUNCIONES DE INTERACCIÓN ---
         function copyToNextRow(btn) {
-            const currentTr = btn.closest('tr');
-            const nextTr = currentTr.nextElementSibling;
+            var currentTr = btn.parentNode.parentNode;
+            var nextTr = currentTr.nextElementSibling;
             if (!nextTr) return; 
             
             nextTr.querySelector('.editable-cell').innerText = currentTr.querySelector('.editable-cell').innerText;
             
-            const nextSelect = nextTr.querySelector('select');
+            var nextSelect = nextTr.querySelector('select');
             nextSelect.value = currentTr.querySelector('select').value;
             
-            const currentYellow = currentTr.querySelector('.cb-yellow').checked;
-            const currentRed = currentTr.querySelector('.cb-red').checked;
+            var currentYellow = currentTr.querySelector('.cb-yellow').checked;
+            var currentRed = currentTr.querySelector('.cb-red').checked;
             
-            const nextYellowCb = nextTr.querySelector('.cb-yellow');
-            const nextRedCb = nextTr.querySelector('.cb-red');
+            var nextYellowCb = nextTr.querySelector('.cb-yellow');
+            var nextRedCb = nextTr.querySelector('.cb-red');
             
             nextYellowCb.checked = currentYellow;
             nextRedCb.checked = currentRed;
@@ -481,11 +478,11 @@
         }
 
         function handleStatusChange(selectElement) {
-            const tr = selectElement.closest('tr');
+            var tr = selectElement.parentNode.parentNode;
             if (selectElement.value === 'Fuera de Santiago') {
                 tr.classList.add('highlighted-green');
-                const yellowCb = tr.querySelector('.cb-yellow');
-                const redCb = tr.querySelector('.cb-red');
+                var yellowCb = tr.querySelector('.cb-yellow');
+                var redCb = tr.querySelector('.cb-red');
                 if (yellowCb) yellowCb.checked = false;
                 if (redCb) redCb.checked = false;
-    
+                tr.classList.remove('hig
