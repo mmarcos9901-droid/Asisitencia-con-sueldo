@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -153,7 +152,7 @@
             font-style: italic;
         }
 
-        /* ESTILOS DEL SUBRAYADOR FLUORESCENTE Y ROJO */
+        /* ESTILOS DE SUBRAYADO (MANUALES Y AUTOMÁTICOS) */
         .highlighted-yellow, 
         tr.weekend.highlighted-yellow {
             background-color: #eaff00 !important;
@@ -164,11 +163,34 @@
             background-color: #ff9999 !important;
             transition: background-color 0.3s ease;
         }
+        .highlighted-green, 
+        tr.weekend.highlighted-green {
+            background-color: #b3ffb3 !important;
+            transition: background-color 0.3s ease;
+        }
+        
         .row-checkbox {
             width: 16px;
             height: 16px;
             cursor: pointer;
             margin: 0 2px;
+        }
+
+        /* BOTÓN DE COPIAR AL DÍA SIGUIENTE */
+        .btn-copy {
+            background-color: transparent !important;
+            border: none;
+            box-shadow: none !important;
+            padding: 0 !important;
+            font-size: 16px !important;
+            cursor: pointer;
+            color: #6c757d;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .btn-copy:hover {
+            background-color: transparent !important;
+            transform: scale(1.3);
+            color: #007bff;
         }
 
         /* RECUADRO DE SUELDO (VISTA PRINCIPAL) */
@@ -179,20 +201,21 @@
             border-radius: 8px;
             font-size: 15px;
             color: #084298;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         #salary-summary-box strong { color: #052c65; }
-        .amount-total { font-size: 18px; font-weight: bold; color: #198754; }
+        .amount-total { font-size: 18px; font-weight: bold; color: #198754; display: block; margin-top: 10px; border-top: 1px dashed #b6d4fe; padding-top: 10px;}
+        .dates-detail { font-size: 13px; color: #052c65; margin-left: 10px; font-style: italic; display: none; }
 
         /* DOCUMENTO OCULTO PARA EXPORTAR EL DETALLE TIPO WORD */
         #hidden-word-document {
             position: absolute;
-            left: -9999px; /* Mantiene el elemento fuera de la pantalla pero renderizable */
+            left: -9999px;
             top: 0;
             background-color: white;
             width: 700px;
             padding: 50px;
-            font-family: 'Times New Roman', Times, serif; /* Fuente formal tipo Word */
+            font-family: 'Times New Roman', Times, serif;
             color: black;
         }
         #hidden-word-document h1 {
@@ -213,6 +236,7 @@
             padding: 10px 5px;
             border-bottom: 1px solid #ddd;
             border: none;
+            vertical-align: top;
         }
         .word-table .amount { text-align: right; font-weight: bold; }
         .word-table .total-row td {
@@ -221,6 +245,7 @@
             font-weight: bold;
             padding-top: 15px;
         }
+        .doc-dates { font-size: 13px; color: #666; font-style: italic; display: block; margin-top: 4px; }
 
     </style>
 </head>
@@ -253,8 +278,9 @@
                     <th width="8%" class="export-hide" style="text-align: center;">🎨</th>
                     <th width="12%">Fecha</th>
                     <th width="15%">Día</th>
-                    <th width="40%">Ruta</th> 
+                    <th width="35%">Ruta</th> 
                     <th width="25%">Estado</th>
+                    <th width="5%" class="export-hide" style="text-align: center;" title="Copiar al día siguiente">⬇️</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -262,11 +288,12 @@
             </tbody>
         </table>
 
-        <!-- RECUADRO DE CÁLCULO DE SUELDO AL FINAL (Se oculta al exportar la asistencia) -->
+        <!-- RECUADRO DE CÁLCULO DE SUELDO AL FINAL -->
         <div id="salary-summary-box" class="export-hide">
             <strong>Desglose Mensual:</strong><br>
-            Días Ausentes Registrados: <span id="live-ausentes">0</span><br>
-            Descuento aplicado: -$<span id="live-descuento">0</span><br>
+            Ausencias (<span id="live-ausentes">0</span> días): <span style="color: red;">-$<span id="live-descuento">0</span></span><br>
+            <div id="live-fechas-container" class="dates-detail">Fechas inasistencia: <span id="live-fechas-ausentes"></span></div>
+            Fuera de Santiago (<span id="live-fuera">0</span> días): <span style="color: green;">+$<span id="live-bono">0</span></span><br>
             <span class="amount-total">Total a Pagar Estimado: $<span id="live-total">800.000</span></span>
         </div>
     </div>
@@ -285,8 +312,15 @@
                 <td class="amount">$<span id="doc-sueldo-base">800.000</span></td>
             </tr>
             <tr>
-                <td>Descuento por Inasistencia (<span id="doc-dias-ausentes">0</span> días)</td>
+                <td>
+                    Descuento por Inasistencia (<span id="doc-dias-ausentes">0</span> días)
+                    <span id="doc-fechas-container" class="doc-dates" style="display: none;">Fechas: <span id="doc-fechas-ausentes"></span></span>
+                </td>
                 <td class="amount" style="color: red;">-$<span id="doc-descuento">0</span></td>
+            </tr>
+            <tr>
+                <td>Bono Fuera de Santiago (<span id="doc-dias-fuera">0</span> días x $10.000)</td>
+                <td class="amount" style="color: green;">+$<span id="doc-bono">0</span></td>
             </tr>
             <tr class="total-row">
                 <td>LÍQUIDO A PAGAR</td>
@@ -294,7 +328,7 @@
             </tr>
         </table>
         <br><br><br>
-        <p style="text-align: center; color: #555; font-size: 14px;">Este documento es un detalle informativo generado automáticamente.</p>
+        <p style="text-align: center; color: #555; font-size: 14px;">Este documento es un detalle informativo generado automáticamente por el registro de asistencia.</p>
     </div>
 
     <script>
@@ -311,28 +345,93 @@
             window.calculateSalary();
         };
 
-        // --- CÁLCULO DE SUELDO Y DESCUENTOS ---
+        // --- COPIAR AL DÍA SIGUIENTE ---
+        window.copyToNextRow = function(btn) {
+            const currentTr = btn.closest('tr');
+            const nextTr = currentTr.nextElementSibling;
+            
+            if (!nextTr) return; // Si es el último día del mes, no hace nada
+            
+            // Copiar Ruta
+            const currentRoute = currentTr.querySelector('.editable-cell').innerText;
+            nextTr.querySelector('.editable-cell').innerText = currentRoute;
+            
+            // Copiar Estado
+            const currentSelect = currentTr.querySelector('select');
+            const nextSelect = nextTr.querySelector('select');
+            nextSelect.value = currentSelect.value;
+            
+            // Copiar colores / checkboxes
+            const currentYellow = currentTr.querySelector('.cb-yellow').checked;
+            const currentRed = currentTr.querySelector('.cb-red').checked;
+            
+            const nextYellowCb = nextTr.querySelector('.cb-yellow');
+            const nextRedCb = nextTr.querySelector('.cb-red');
+            
+            nextYellowCb.checked = currentYellow;
+            nextRedCb.checked = currentRed;
+            
+            // Aplicar las clases visuales de color en la siguiente fila
+            nextTr.classList.remove('highlighted-yellow', 'highlighted-red', 'highlighted-green');
+            
+            if (nextSelect.value === 'Fuera de Santiago') {
+                nextTr.classList.add('highlighted-green');
+                nextYellowCb.checked = false;
+                nextRedCb.checked = false;
+            } else if (currentYellow) {
+                nextTr.classList.add('highlighted-yellow');
+            } else if (currentRed) {
+                nextTr.classList.add('highlighted-red');
+            }
+            
+            // Guardar automáticamente y recalcular sueldos
+            window.saveDataLocally(true);
+            window.calculateSalary();
+        };
+
+        // --- CÁLCULO DE SUELDO Y BONOS ---
         window.calculateSalary = function() {
             let absentDays = 0;
-            // Solo contamos los que estén marcados explícitamente como "Ausente"
-            document.querySelectorAll('#tableBody select').forEach(select => {
-                if(select.value === 'Ausente') absentDays++;
+            let outsideDays = 0;
+            let absentDates = []; 
+            
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                const select = tr.querySelector('select');
+                if (select) {
+                    if(select.value === 'Ausente') {
+                        absentDays++;
+                        let fecha = tr.cells[1].innerText;
+                        absentDates.push(fecha);
+                    }
+                    if(select.value === 'Fuera de Santiago') {
+                        outsideDays++;
+                    }
+                }
             });
             
             let sueldoBaseStr = document.getElementById('input-sueldo').value;
             let sueldoBase = window.parseNumber(sueldoBaseStr);
             
-            // Fórmula: Sueldo / 30 días comerciales para obtener el valor del día
             let valorDia = Math.round(sueldoBase / 30); 
             let descuento = absentDays * valorDia;
-            let total = sueldoBase - descuento;
+            let bono = outsideDays * 10000;
+            let total = sueldoBase - descuento + bono;
 
-            // 1. Actualizar el recuadro de la vista principal
             document.getElementById('live-ausentes').innerText = absentDays;
             document.getElementById('live-descuento').innerText = window.formatNumber(descuento);
+            
+            const liveFechasContainer = document.getElementById('live-fechas-container');
+            if (absentDates.length > 0) {
+                document.getElementById('live-fechas-ausentes').innerText = absentDates.join(', ');
+                liveFechasContainer.style.display = 'block';
+            } else {
+                liveFechasContainer.style.display = 'none';
+            }
+
+            document.getElementById('live-fuera').innerText = outsideDays;
+            document.getElementById('live-bono').innerText = window.formatNumber(bono);
             document.getElementById('live-total').innerText = window.formatNumber(total);
 
-            // 2. Actualizar los datos en el documento tipo Word (oculto)
             document.getElementById('doc-mes').innerText = document.getElementById('displayMonth').value;
             document.getElementById('doc-nombre').innerText = document.getElementById('input-nombre').value;
             document.getElementById('doc-cargo').innerText = document.getElementById('input-cargo').value;
@@ -341,215 +440,51 @@
             document.getElementById('doc-sueldo-base').innerText = window.formatNumber(sueldoBase);
             document.getElementById('doc-dias-ausentes').innerText = absentDays;
             document.getElementById('doc-descuento').innerText = window.formatNumber(descuento);
+            
+            const docFechasContainer = document.getElementById('doc-fechas-container');
+            if (absentDates.length > 0) {
+                document.getElementById('doc-fechas-ausentes').innerText = absentDates.join(', ');
+                docFechasContainer.style.display = 'block';
+            } else {
+                docFechasContainer.style.display = 'none';
+            }
+
+            document.getElementById('doc-dias-fuera').innerText = outsideDays;
+            document.getElementById('doc-bono').innerText = window.formatNumber(bono);
             document.getElementById('doc-total').innerText = window.formatNumber(total);
         };
 
-        // --- FUNCIONES DE ASISTENCIA ---
+        // --- MANEJO DE ESTADOS Y COLORES AUTOMÁTICOS ---
+        window.handleStatusChange = function(selectElement) {
+            const tr = selectElement.closest('tr');
+            
+            if (selectElement.value === 'Fuera de Santiago') {
+                tr.classList.add('highlighted-green');
+                const yellowCb = tr.querySelector('.cb-yellow');
+                const redCb = tr.querySelector('.cb-red');
+                if (yellowCb) yellowCb.checked = false;
+                if (redCb) redCb.checked = false;
+                tr.classList.remove('highlighted-yellow', 'highlighted-red');
+            } else {
+                tr.classList.remove('highlighted-green');
+            }
+
+            window.saveDataLocally(true);
+            window.calculateSalary();
+        };
+
+        // --- FUNCIONES DE PALOMITAS MANUALES (AMARILLO/ROJO) ---
         window.toggleHighlight = function(checkbox, color) {
             const tr = checkbox.closest('tr');
+            const select = tr.querySelector('select');
             const yellowCb = tr.querySelector('.cb-yellow');
             const redCb = tr.querySelector('.cb-red');
 
             if (color === 'yellow' && checkbox.checked) {
                 if(redCb) redCb.checked = false;
-                tr.classList.remove('highlighted-red');
+                tr.classList.remove('highlighted-red', 'highlighted-green');
                 tr.classList.add('highlighted-yellow');
             } else if (color === 'red' && checkbox.checked) {
                 if(yellowCb) yellowCb.checked = false;
-                tr.classList.remove('highlighted-yellow');
-                tr.classList.add('highlighted-red');
-            } else {
-                tr.classList.remove('highlighted-yellow', 'highlighted-red');
-            }
-            window.saveDataLocally(true);
-        };
-
-        window.handleMonthChange = function() {
-            const monthPicker = document.getElementById('monthPicker').value;
-            if (!monthPicker) return;
-
-            const [year, month] = monthPicker.split('-');
-            const date = new Date(year, month - 1, 1);
-            const totalDays = new Date(year, month, 0).getDate();
-            
-            document.getElementById('displayMonth').value = `${monthsInSpanish[date.getMonth()]} ${year}`;
-
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            for (let i = 1; i <= totalDays; i++) {
-                const currentDate = new Date(year, month - 1, i);
-                const dayOfWeek = currentDate.getDay();
-                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                
-                const tr = document.createElement('tr');
-                if (isWeekend) tr.className = 'weekend';
-
-                const routeValue = isWeekend ? '-' : 'San Miguel';
-                
-                const statusOptions = `
-                    <option value="Presente" ${!isWeekend ? 'selected' : ''}>Presente</option>
-                    <option value="Descanso" ${isWeekend ? 'selected' : ''}>Descanso</option>
-                    <option value="Ausente">Ausente</option>
-                    <option value="Feriado">Feriado</option>
-                `;
-
-                tr.innerHTML = `
-                    <td class="export-hide" style="text-align: center; white-space: nowrap;">
-                        <input type="checkbox" onchange="window.toggleHighlight(this, 'yellow')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;" title="Subrayar Amarillo">
-                        <input type="checkbox" onchange="window.toggleHighlight(this, 'red')" class="row-checkbox cb-red" style="accent-color: red;" title="Subrayar Rojo">
-                    </td>
-                    <td>${String(i).padStart(2, '0')}-${month}</td>
-                    <td>${daysInSpanish[dayOfWeek]}</td>
-                    <td><div contenteditable="true" class="editable-cell" onblur="window.saveDataLocally(true)">${routeValue}</div></td>
-                    <td>
-                        <select onchange="window.saveDataLocally(true); window.calculateSalary()">
-                            ${statusOptions}
-                        </select>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            }
-
-            window.loadDataLocally(monthPicker);
-            window.calculateSalary();
-        };
-
-        // --- EXPORTACIÓN DE IMÁGENES ---
-        
-        // 1. Exportar la tabla de asistencia
-        window.exportToImage = function() {
-            const element = document.getElementById('document-container');
-            const btn = document.querySelector('.btn-export');
-            btn.innerText = "Generando...";
-            btn.style.backgroundColor = "#6c757d";
-
-            // Ocultar checkboxes y recuadro de sueldo en la foto de asistencia
-            const hideElements = document.querySelectorAll('.export-hide');
-            hideElements.forEach(el => el.style.display = 'none');
-
-            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Asistencia_${document.getElementById('displayMonth').value.replace(' ', '_')}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                hideElements.forEach(el => el.style.display = '');
-                
-                btn.innerText = "Exportar Asistencia";
-                btn.style.backgroundColor = "#28a745";
-            });
-        };
-
-        // 2. Exportar el detalle de liquidación tipo Word
-        window.exportSalaryDetail = function() {
-            const element = document.getElementById('hidden-word-document');
-            const btn = document.querySelector('.btn-salary');
-            btn.innerText = "Generando...";
-            btn.style.backgroundColor = "#6c757d";
-
-            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Liquidacion_${document.getElementById('displayMonth').value.replace(' ', '_')}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                btn.innerText = "Descargar Liquidación";
-                btn.style.backgroundColor = "#dc3545";
-            });
-        };
-
-        // --- SISTEMA DE GUARDADO LOCAL ---
-        window.saveDataLocally = function(isAutoSave = false) {
-            const monthPicker = document.getElementById('monthPicker').value;
-            if (!monthPicker) return;
-
-            const header = {
-                nombre: document.getElementById('input-nombre').value,
-                cargo: document.getElementById('input-cargo').value,
-                empresa: document.getElementById('input-empresa').value,
-                jornada: document.getElementById('input-jornada').value,
-                sueldo: document.getElementById('input-sueldo').value
-            };
-
-            const rows = [];
-            document.querySelectorAll('#tableBody tr').forEach(tr => {
-                rows.push({
-                    checkYellow: tr.querySelector('.cb-yellow').checked,
-                    checkRed: tr.querySelector('.cb-red').checked,
-                    route: tr.querySelector('.editable-cell').innerText,
-                    status: tr.querySelector('select').value
-                });
-            });
-
-            localStorage.setItem('asistencia_' + monthPicker, JSON.stringify({ header, rows }));
-            document.getElementById('local-status').innerText = "💾 Guardado localmente";
-
-            if (!isAutoSave) {
-                const btnSave = document.getElementById('btn-save');
-                btnSave.innerText = "Guardado ✓";
-                btnSave.style.backgroundColor = "#17a2b8";
-                setTimeout(() => {
-                    btnSave.innerText = "Guardar";
-                    btnSave.style.backgroundColor = "#007bff";
-                }, 2000);
-            }
-        };
-
-        window.loadDataLocally = function(monthId) {
-            const savedData = localStorage.getItem('asistencia_' + monthId);
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    if (data.header) {
-                        document.getElementById('input-nombre').value = data.header.nombre || '';
-                        document.getElementById('input-cargo').value = data.header.cargo || '';
-                        document.getElementById('input-empresa').value = data.header.empresa || '';
-                        document.getElementById('input-jornada').value = data.header.jornada || '';
-                        if(data.header.sueldo) document.getElementById('input-sueldo').value = data.header.sueldo;
-                    }
-                    if (data.rows) {
-                        const tableRows = document.querySelectorAll('#tableBody tr');
-                        data.rows.forEach((rowData, idx) => {
-                            if (tableRows[idx]) {
-                                const tr = tableRows[idx];
-                                const yellowCb = tr.querySelector('.cb-yellow');
-                                const redCb = tr.querySelector('.cb-red');
-                                
-                                if (rowData.checkYellow || rowData.checked) {
-                                    yellowCb.checked = true;
-                                    tr.classList.add('highlighted-yellow');
-                                }
-                                if (rowData.checkRed) {
-                                    redCb.checked = true;
-                                    tr.classList.add('highlighted-red');
-                                }
-                                
-                                tr.querySelector('.editable-cell').innerText = rowData.route || '';
-                                tr.querySelector('select').value = rowData.status || '';
-                            }
-                        });
-                    }
-                    document.getElementById('local-status').innerText = "💾 Datos cargados";
-                } catch(e) { console.error("Error leyendo datos:", e); }
-            } else {
-                document.getElementById('local-status').innerText = "💾 Listo para usar";
-            }
-            window.calculateSalary();
-        };
-
-        // --- INICIO AUTOMÁTICO ---
-        window.onload = function() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('monthPicker').value = `${year}-${month}`;
-            
-            window.handleMonthChange();
-        };
-    </script>
-</body>
-</html>
-
-
-```
+                tr.classList.remove('highlighted-yellow', 'highlighted-green');
+                tr.classList.add('highli
