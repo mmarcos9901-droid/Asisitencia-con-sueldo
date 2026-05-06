@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia Móvil</title>
-    <!-- Ya no hay scripts externos aquí bloqueando la carga -->
     <style>
         /* ESTILOS BASE PARA MÓVIL */
         body {
@@ -21,7 +20,6 @@
             margin-bottom: 15px;
         }
 
-        /* NUEVO SELECTOR DE FECHA A PRUEBA DE FALLOS */
         .date-picker-group {
             display: flex;
             gap: 10px;
@@ -55,8 +53,8 @@
         .btn-copy { background: transparent; color: #555; font-size: 22px; width: 100%; height: 100%; padding:0;}
 
         #status-bar {
-            text-align: center; font-size: 14px; color: #555; padding: 8px;
-            background: white; border-radius: 20px; border: 1px solid #ddd;
+            text-align: center; font-size: 14px; color: #555; padding: 10px;
+            background: white; border-radius: 8px; border: 1px solid #ddd; font-weight: bold;
         }
 
         .card {
@@ -74,7 +72,6 @@
             flex: 1; border: none; font-size: 16px; width: 100%; background: transparent; outline: none;
         }
 
-        /* TABLA DESLIZABLE */
         .table-scroll {
             width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 15px 0;
         }
@@ -88,13 +85,11 @@
         
         .weekend { background-color: #fafafa; color: #777; font-style: italic;}
         
-        /* COLORES Y CHECKBOXES */
         .row-yellow { background-color: #eaff00 !important; }
         .row-red { background-color: #ff9999 !important; }
         .row-green { background-color: #b3ffb3 !important; }
         .cbox { width: 22px; height: 22px; margin: 0 4px; vertical-align: middle; }
 
-        /* RECUADRO DE SUELDO */
         .salary-box {
             background-color: #e3f2fd; border: 1px solid #b6d4fe; padding: 15px;
             border-radius: 8px; font-size: 14px; color: #084298;
@@ -104,7 +99,6 @@
             padding-top: 10px; border-top: 1px dashed #b6d4fe; display: block;
         }
 
-        /* DOCUMENTO OCULTO PARA EXPORTAR */
         #hidden-doc {
             position: absolute; left: -9999px; top: 0; background-color: white;
             width: 700px; padding: 40px; color: black; font-family: "Times New Roman", Times, serif;
@@ -142,21 +136,7 @@
         </div>
 
         <div class="table-scroll" id="table-wrapper">
-            <table id="the-table">
-                <thead>
-                    <tr>
-                        <th width="12%" class="hide-exp" style="text-align:center;">🎨</th>
-                        <th width="15%">Fecha</th>
-                        <th width="12%">Día</th>
-                        <th width="33%">Ruta</th>
-                        <th width="20%">Estado</th>
-                        <th width="8%" class="hide-exp" style="text-align:center;">⬇️</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <!-- Filas JS -->
-                </tbody>
-            </table>
+            <!-- La tabla se inyectará aquí -->
         </div>
 
         <div class="salary-box hide-exp">
@@ -169,7 +149,6 @@
         </div>
     </div>
 
-    <!-- DOCUMENTO WORD OCULTO -->
     <div id="hidden-doc">
         <h1>DETALLE DE REMUNERACIÓN</h1>
         <p><strong>Mes:</strong> <span id="doc-mes"></span></p>
@@ -201,8 +180,18 @@
         <p style="text-align:center; font-size:12px; color:#666; margin-top:50px;">Documento generado automáticamente.</p>
     </div>
 
-    <!-- LÓGICA JAVASCRIPT A PRUEBA DE MÓVILES -->
     <script>
+        // CAPTURADOR DE ERRORES VISIBLE
+        window.onerror = function(mensaje, fuente, linea) {
+            var sb = document.getElementById('status-bar');
+            if(sb) {
+                sb.innerText = "Error (L:" + linea + "): " + mensaje;
+                sb.style.color = "red";
+                sb.style.borderColor = "red";
+            }
+            return false;
+        };
+
         var diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         var mesesAnio = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -216,43 +205,66 @@
             app_recalculate();
         }
 
-        // --- 1. INICIALIZAR SELECTORES DE FECHA ---
+        // 1. INICIALIZAR SELECTORES DE FECHA (MÉTODO BLINDADO PARA WEBVIEWS)
         function initSelectors() {
             var elMes = document.getElementById('sel-mes');
             var elAnio = document.getElementById('sel-anio');
+            if (!elMes || !elAnio) return;
+
             var hoy = new Date();
             var mesActual = hoy.getMonth();
             var anioActual = hoy.getFullYear();
 
-            var htmlMes = '';
+            // Usando DOM Elements en lugar de innerHTML para evitar bloqueos en Android
+            elMes.options.length = 0;
             for(var i=0; i<12; i++) {
-                var sel = (i === mesActual) ? 'selected' : '';
-                htmlMes += '<option value="' + i + '" ' + sel + '>' + mesesAnio[i] + '</option>';
+                var optM = document.createElement('option');
+                optM.value = i;
+                optM.text = mesesAnio[i];
+                if(i === mesActual) optM.selected = true;
+                elMes.appendChild(optM);
             }
-            elMes.innerHTML = htmlMes;
 
-            var htmlAnio = '';
+            elAnio.options.length = 0;
             for(var j = anioActual - 1; j <= anioActual + 2; j++) {
-                var sel = (j === anioActual) ? 'selected' : '';
-                htmlAnio += '<option value="' + j + '" ' + sel + '>' + j + '</option>';
+                var optA = document.createElement('option');
+                optA.value = j;
+                optA.text = j;
+                if(j === anioActual) optA.selected = true;
+                elAnio.appendChild(optA);
             }
-            elAnio.innerHTML = htmlAnio;
         }
 
         function getStorageKey() {
-            return "asistencia_" + document.getElementById('sel-anio').value + "_" + document.getElementById('sel-mes').value;
+            var selA = document.getElementById('sel-anio');
+            var selM = document.getElementById('sel-mes');
+            if(!selA || !selM) return "asistencia_error";
+            return "asistencia_" + selA.value + "_" + selM.value;
         }
 
-        // --- 2. CONSTRUIR TABLA ---
+        // 2. CONSTRUIR TABLA
         function app_buildTable() {
-            var mesIndice = parseInt(document.getElementById('sel-mes').value, 10);
-            var year = parseInt(document.getElementById('sel-anio').value, 10);
+            var selM = document.getElementById('sel-mes');
+            var selA = document.getElementById('sel-anio');
+            if(!selM || !selA) return;
+
+            var mesIndice = parseInt(selM.value, 10);
+            var year = parseInt(selA.value, 10);
+            if (isNaN(mesIndice) || isNaN(year)) return;
+
             var totalDias = new Date(year, mesIndice + 1, 0).getDate();
 
             document.getElementById('val-month').value = mesesAnio[mesIndice] + " " + year;
 
-            var tbody = document.getElementById('table-body');
-            var html = "";
+            var html = '<table id="the-table">';
+            html += '<thead><tr>';
+            html += '<th width="12%" class="hide-exp" style="text-align:center;">🎨</th>';
+            html += '<th width="15%">Fecha</th>';
+            html += '<th width="12%">Día</th>';
+            html += '<th width="33%">Ruta</th>';
+            html += '<th width="20%">Estado</th>';
+            html += '<th width="8%" class="hide-exp" style="text-align:center;">⬇️</th>';
+            html += '</tr></thead><tbody id="table-body">';
 
             for (var i = 1; i <= totalDias; i++) {
                 var fechaActual = new Date(year, mesIndice, i);
@@ -283,14 +295,25 @@
                 html += '<td class="hide-exp" style="text-align:center;"><button class="btn-copy" onclick="app_copyDown(this)">⬇️</button></td>';
                 html += '</tr>';
             }
+            html += '</tbody></table>';
 
-            tbody.innerHTML = html;
+            // Actualizar contenedor por completo
+            var wrapper = document.getElementById('table-wrapper');
+            if(wrapper) {
+                wrapper.innerHTML = html;
+            }
+
             app_loadData();
             app_recalculate();
-            document.getElementById('status-bar').innerText = "✅ Tabla cargada correctamente";
+            
+            var sb = document.getElementById('status-bar');
+            if(sb) {
+                sb.innerText = "✅ Aplicación lista para usar";
+                sb.style.color = "#198754";
+                sb.style.borderColor = "#198754";
+            }
         }
 
-        // --- 3. ACCIONES DE FILA ---
         function app_rowAction(elemento, accion) {
             var tr = elemento.parentNode.parentNode;
             var select = tr.querySelector('.sel-status');
@@ -334,13 +357,16 @@
             app_recalculate();
         }
 
-        // --- 4. CÁLCULO Y GUARDADO LOCAL ---
+        // 4. CÁLCULO Y GUARDADO
         function app_recalculate() {
             var ausentesDias = 0;
             var fueraDias = 0;
             var fechasAusentes = [];
 
-            var filas = document.getElementById('table-body').getElementsByTagName('tr');
+            var tbody = document.getElementById('table-body');
+            if(!tbody) return;
+
+            var filas = tbody.getElementsByTagName('tr');
             for (var i = 0; i < filas.length; i++) {
                 var select = filas[i].querySelector('.sel-status');
                 if (select) {
@@ -358,21 +384,19 @@
             var bono = fueraDias * 10000;
             var totalFinal = sueldoBase - descuento + bono;
 
-            // Actualizar Interfaz
             document.getElementById('ui-ausentes-dias').innerText = ausentesDias;
             document.getElementById('ui-ausentes-val').innerText = formatNum(descuento);
             
             var uiFechasBox = document.getElementById('ui-fechas-box');
-            if (ausentesDias > 0) {
+            if (ausentesDias > 0 && uiFechasBox) {
                 document.getElementById('ui-fechas-text').innerText = fechasAusentes.join(', ');
                 uiFechasBox.style.display = 'inline';
-            } else { uiFechasBox.style.display = 'none'; }
+            } else if(uiFechasBox) { uiFechasBox.style.display = 'none'; }
 
             document.getElementById('ui-fuera-dias').innerText = fueraDias;
             document.getElementById('ui-fuera-val').innerText = formatNum(bono);
             document.getElementById('ui-total').innerText = formatNum(totalFinal);
 
-            // Actualizar Word Oculto
             document.getElementById('doc-mes').innerText = document.getElementById('val-month').value;
             document.getElementById('doc-nombre').innerText = document.getElementById('val-nombre').value;
             document.getElementById('doc-cargo').innerText = document.getElementById('val-cargo').value;
@@ -382,10 +406,10 @@
             document.getElementById('doc-aus-val').innerText = formatNum(descuento);
             
             var docFechasBox = document.getElementById('doc-fechas-box');
-            if (ausentesDias > 0) {
+            if (ausentesDias > 0 && docFechasBox) {
                 document.getElementById('doc-fechas').innerText = fechasAusentes.join(', ');
                 docFechasBox.style.display = 'inline';
-            } else { docFechasBox.style.display = 'none'; }
+            } else if(docFechasBox) { docFechasBox.style.display = 'none'; }
 
             document.getElementById('doc-fue-dias').innerText = fueraDias;
             document.getElementById('doc-fue-val').innerText = formatNum(bono);
@@ -405,21 +429,9 @@
                     filas: []
                 };
 
-                var filas = document.getElementById('table-body').getElementsByTagName('tr');
+                var tbody = document.getElementById('table-body');
+                if(!tbody) return;
+
+                var filas = tbody.getElementsByTagName('tr');
                 for (var i = 0; i < filas.length; i++) {
-                    datos.filas.push({
-                        ruta: filas[i].querySelector('.editable-cell').innerText,
-                        estado: filas[i].querySelector('.sel-status').value,
-                        cY: filas[i].querySelector('.cb-y').checked,
-                        cR: filas[i].querySelector('.cb-r').checked
-                    });
-                }
-
-                localStorage.setItem(getStorageKey(), JSON.stringify(datos));
-                document.getElementById('status-bar').innerText = "💾 Guardado automático";
-
-                if (!silencio) {
-                    var btnSave = document.getElementById('btn-save');
-                    btnSave.innerText = "¡Guardado!";
-                    btnSave.style.backgroundColor = "#17a2b8";
-                    setTimeout(function(){ btnSave.innerText = "Guardar Avance"; btnSave.style.backgroundC
+                    datos.filas.
