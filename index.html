@@ -4,189 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia Móvil</title>
-    <!-- Librería para tomar fotos -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Ya no hay scripts externos aquí bloqueando la carga -->
     <style>
-        /* ESTILOS OPTIMIZADOS PARA CELULAR */
+        /* ESTILOS BASE PARA MÓVIL */
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #eef2f5;
             margin: 0;
             padding: 10px;
         }
 
-        /* Si hay un error, lo mostraremos aquí */
-        #error-log {
-            display: none;
-            background: #ffdddd;
-            color: #d8000c;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            border: 1px solid #d8000c;
-        }
-
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 15px;
         }
-        
-        .controls input[type="month"] {
+
+        /* NUEVO SELECTOR DE FECHA A PRUEBA DE FALLOS */
+        .date-picker-group {
+            display: flex;
+            gap: 10px;
             width: 100%;
-            padding: 12px;
+        }
+        .date-picker-group select {
+            padding: 14px;
             border: 1px solid #ccc;
             border-radius: 8px;
-            font-size: 18px;
-            box-sizing: border-box;
-            text-align: center;
+            font-size: 16px;
+            background-color: white;
+            font-weight: bold;
         }
+        #sel-mes { flex: 2; }
+        #sel-anio { flex: 1; }
         
         button {
             width: 100%;
             border: none;
-            padding: 15px;
+            padding: 16px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             color: white;
-            box-sizing: border-box;
             -webkit-appearance: none;
         }
         
         .btn-save { background-color: #007bff; }
         .btn-export { background-color: #28a745; }
         .btn-salary { background-color: #dc3545; }
-        .btn-copy {
-            background: none;
-            color: #555;
-            font-size: 20px;
-            padding: 5px;
-            width: auto;
-            border-radius: 0;
-        }
+        .btn-copy { background: transparent; color: #555; font-size: 22px; width: 100%; height: 100%; padding:0;}
 
         #status-bar {
-            text-align: center;
-            font-size: 14px;
-            color: #555;
-            padding: 8px;
-            background: white;
-            border-radius: 20px;
+            text-align: center; font-size: 14px; color: #555; padding: 8px;
+            background: white; border-radius: 20px; border: 1px solid #ddd;
         }
 
         .card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
+            background: white; padding: 15px; border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: hidden;
         }
 
-        h2 {
-            text-align: center;
-            font-size: 18px;
-            margin-top: 0;
-            color: #333;
-        }
+        h2 { text-align: center; font-size: 18px; margin-top: 0; color: #333; }
 
         .header-info div {
-            display: flex;
-            border-bottom: 1px solid #eee;
-            padding: 5px 0;
-            align-items: center;
+            display: flex; border-bottom: 1px solid #eee; padding: 6px 0; align-items: center;
         }
-        .header-info strong {
-            width: 90px;
-            font-size: 14px;
-            color: #444;
-        }
+        .header-info strong { width: 90px; font-size: 14px; color: #444; }
         .header-info input {
-            flex: 1;
-            border: none;
-            font-size: 15px;
-            padding: 5px;
-            width: 100%;
-            box-sizing: border-box;
+            flex: 1; border: none; font-size: 16px; width: 100%; background: transparent; outline: none;
         }
 
-        /* TABLA DESLIZABLE EN CELULAR */
+        /* TABLA DESLIZABLE */
         .table-scroll {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-top: 15px;
-            margin-bottom: 15px;
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 15px 0;
         }
 
-        table {
-            width: 100%;
-            min-width: 500px;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px 4px;
-            text-align: left;
-        }
+        table { width: 100%; min-width: 550px; border-collapse: collapse; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px 4px; text-align: left; vertical-align: middle; }
         th { background-color: #f5f5f5; }
         
-        .editable-cell {
-            width: 100%;
-            min-height: 20px;
-            outline: none;
-        }
-        select {
-            width: 100%;
-            border: none;
-            font-size: 14px;
-            background: transparent;
-            padding: 5px 0;
-        }
+        .editable-cell { width: 100%; min-height: 24px; outline: none; }
+        .sel-status { width: 100%; border: none; font-size: 15px; background: transparent; padding: 8px 0; }
         
-        .weekend { background-color: #fafafa; color: #777; }
+        .weekend { background-color: #fafafa; color: #777; font-style: italic;}
         
-        /* COLORES */
+        /* COLORES Y CHECKBOXES */
         .row-yellow { background-color: #eaff00 !important; }
         .row-red { background-color: #ff9999 !important; }
         .row-green { background-color: #b3ffb3 !important; }
-        
-        .cbox { width: 20px; height: 20px; margin: 0 2px; vertical-align: middle; }
+        .cbox { width: 22px; height: 22px; margin: 0 4px; vertical-align: middle; }
 
         /* RECUADRO DE SUELDO */
         .salary-box {
-            background-color: #e3f2fd;
-            border: 1px solid #b6d4fe;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #084298;
-            margin-top: 15px;
+            background-color: #e3f2fd; border: 1px solid #b6d4fe; padding: 15px;
+            border-radius: 8px; font-size: 14px; color: #084298;
         }
         .salary-total {
-            font-size: 18px;
-            font-weight: bold;
-            color: #198754;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #b6d4fe;
-            display: block;
+            font-size: 18px; font-weight: bold; color: #198754; margin-top: 10px;
+            padding-top: 10px; border-top: 1px dashed #b6d4fe; display: block;
         }
 
         /* DOCUMENTO OCULTO PARA EXPORTAR */
         #hidden-doc {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            background-color: white;
-            width: 700px;
-            padding: 40px;
-            color: black;
-            font-family: "Times New Roman", Times, serif;
+            position: absolute; left: -9999px; top: 0; background-color: white;
+            width: 700px; padding: 40px; color: black; font-family: "Times New Roman", Times, serif;
         }
         #hidden-doc h1 { text-align: center; border-bottom: 2px solid black; }
         .doc-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 16px; }
@@ -197,13 +118,14 @@
 </head>
 <body>
 
-    <div id="error-log"></div>
-
     <div class="controls">
-        <input type="month" id="inp-month" onchange="app_buildTable()">
-        <button class="btn-save" id="btn-save" onclick="app_saveData()">Guardar Datos</button>
-        <button class="btn-export" onclick="app_exportAssistance()">Exportar Asistencia</button>
-        <button class="btn-salary" onclick="app_exportSalary()">Descargar Liquidación</button>
+        <div class="date-picker-group">
+            <select id="sel-mes" onchange="app_buildTable()"></select>
+            <select id="sel-anio" onchange="app_buildTable()"></select>
+        </div>
+        <button class="btn-save" id="btn-save" onclick="app_saveData()">Guardar Avance</button>
+        <button class="btn-export" id="btn-assist" onclick="triggerExport('assist')">Exportar Asistencia</button>
+        <button class="btn-salary" id="btn-salary" onclick="triggerExport('salary')">Descargar Liquidación</button>
         <div id="status-bar">Iniciando aplicación...</div>
     </div>
 
@@ -216,19 +138,19 @@
             <div><strong>Cargo:</strong> <input type="text" id="val-cargo" value="Conductor" onblur="app_recalculate()"></div>
             <div><strong>Empresa:</strong> <input type="text" id="val-empresa" value="Transportes Uribe" onblur="app_recalculate()"></div>
             <div><strong>Jornada:</strong> <input type="text" id="val-jornada" value="Lunes a Viernes" onblur="app_saveData()"></div>
-            <div><strong>Sueldo: $</strong> <input type="text" id="val-sueldo" value="800.000" onblur="app_formatSueldo(this)"></div>
+            <div><strong>Sueldo Base:</strong> $<input type="text" id="val-sueldo" value="800.000" onblur="app_formatSueldo(this)"></div>
         </div>
 
         <div class="table-scroll" id="table-wrapper">
             <table id="the-table">
                 <thead>
                     <tr>
-                        <th width="10%" class="hide-exp" style="text-align:center;">🎨</th>
+                        <th width="12%" class="hide-exp" style="text-align:center;">🎨</th>
                         <th width="15%">Fecha</th>
-                        <th width="15%">Día</th>
-                        <th width="30%">Ruta</th>
+                        <th width="12%">Día</th>
+                        <th width="33%">Ruta</th>
                         <th width="20%">Estado</th>
-                        <th width="10%" class="hide-exp" style="text-align:center;">⬇️</th>
+                        <th width="8%" class="hide-exp" style="text-align:center;">⬇️</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -238,12 +160,12 @@
         </div>
 
         <div class="salary-box hide-exp">
-            <strong>Resumen del Mes:</strong><br><br>
+            <strong>Desglose Mensual:</strong><br><br>
             Ausencias (<span id="ui-ausentes-dias">0</span>): <span style="color:red">-$<span id="ui-ausentes-val">0</span></span><br>
-            <span id="ui-fechas-box" style="display:none; font-size:12px; color:#555;">Días: <span id="ui-fechas-text"></span><br></span>
+            <span id="ui-fechas-box" style="display:none; font-size:13px; color:#555;">(Fechas: <span id="ui-fechas-text"></span>)<br></span>
             <br>
-            Fuera Stgo (<span id="ui-fuera-dias">0</span>): <span style="color:green">+$<span id="ui-fuera-val">0</span></span><br>
-            <span class="salary-total">A Pagar: $<span id="ui-total">800.000</span></span>
+            Fuera de Stgo (<span id="ui-fuera-dias">0</span>): <span style="color:green">+$<span id="ui-fuera-val">0</span></span><br>
+            <span class="salary-total">Total a Pagar: $<span id="ui-total">800.000</span></span>
         </div>
     </div>
 
@@ -263,12 +185,12 @@
             <tr>
                 <td>
                     Descuento Inasistencia (<span id="doc-aus-dias">0</span> días)<br>
-                    <span id="doc-fechas-box" style="display:none; font-size:13px; color:#666;">Fechas: <span id="doc-fechas"></span></span>
+                    <span id="doc-fechas-box" style="display:none; font-size:14px; color:#666;">Fechas: <span id="doc-fechas"></span></span>
                 </td>
                 <td class="right" style="color:red">-$<span id="doc-aus-val">0</span></td>
             </tr>
             <tr>
-                <td>Bono Fuera de Santiago (<span id="doc-fue-dias">0</span> días)</td>
+                <td>Bono Fuera de Santiago (<span id="doc-fue-dias">0</span> días x $10.000)</td>
                 <td class="right" style="color:green">+$<span id="doc-fue-val">0</span></td>
             </tr>
             <tr class="total">
@@ -276,32 +198,17 @@
                 <td class="right">$<span id="doc-total">800.000</span></td>
             </tr>
         </table>
-        <p style="text-align:center; font-size:12px; color:#666; margin-top:50px;">Documento generado por App de Asistencia.</p>
+        <p style="text-align:center; font-size:12px; color:#666; margin-top:50px;">Documento generado automáticamente.</p>
     </div>
 
+    <!-- LÓGICA JAVASCRIPT A PRUEBA DE MÓVILES -->
     <script>
-        // --- 1. CONFIGURACIÓN UNIVERSAL ---
         var diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         var mesesAnio = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        function showError(msg) {
-            var log = document.getElementById('error-log');
-            log.style.display = 'block';
-            log.innerText = "Error: " + msg;
-        }
-
-        function formatNum(n) {
-            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-
-        function parseNum(str) {
-            var parsed = parseInt(str.replace(/\./g, ''), 10);
-            return isNaN(parsed) ? 0 : parsed;
-        }
-
-        function padZero(n) {
-            return n < 10 ? '0' + n : n;
-        }
+        function formatNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+        function parseNum(str) { var p = parseInt(str.replace(/\./g, ''), 10); return isNaN(p) ? 0 : p; }
+        function padZero(n) { return n < 10 ? '0' + n : n; }
 
         function app_formatSueldo(input) {
             var valor = parseNum(input.value);
@@ -309,90 +216,97 @@
             app_recalculate();
         }
 
-        // --- 2. CONSTRUCCIÓN DE LA TABLA ---
-        function app_buildTable() {
-            try {
-                var valMonth = document.getElementById('inp-month').value;
-                if (!valMonth) return;
+        // --- 1. INICIALIZAR SELECTORES DE FECHA ---
+        function initSelectors() {
+            var elMes = document.getElementById('sel-mes');
+            var elAnio = document.getElementById('sel-anio');
+            var hoy = new Date();
+            var mesActual = hoy.getMonth();
+            var anioActual = hoy.getFullYear();
 
-                var partes = valMonth.split('-');
-                var year = parseInt(partes[0], 10);
-                var month = parseInt(partes[1], 10);
-                var totalDias = new Date(year, month, 0).getDate();
-
-                document.getElementById('val-month').value = mesesAnio[month - 1] + " " + year;
-
-                var tbody = document.getElementById('table-body');
-                var html = "";
-
-                for (var i = 1; i <= totalDias; i++) {
-                    var fechaActual = new Date(year, month - 1, i);
-                    var diaSemana = fechaActual.getDay();
-                    var esFin = (diaSemana === 0 || diaSemana === 6);
-                    
-                    var claseTR = esFin ? "weekend" : "";
-                    var rutaBase = esFin ? "-" : "San Miguel";
-                    
-                    var selPres = !esFin ? "selected" : "";
-                    var selDesc = esFin ? "selected" : "";
-
-                    html += '<tr class="' + claseTR + '">';
-                    // Columna Checkboxes
-                    html += '<td class="hide-exp" style="text-align:center; white-space:nowrap;">';
-                    html += '<input type="checkbox" class="cbox cb-y" onchange="app_rowAction(this, \'yellow\')">';
-                    html += '<input type="checkbox" class="cbox cb-r" onchange="app_rowAction(this, \'red\')">';
-                    html += '</td>';
-                    // Columnas de Texto
-                    html += '<td>' + padZero(i) + '/' + padZero(month) + '</td>';
-                    html += '<td>' + diasSemana[diaSemana] + '</td>';
-                    html += '<td><div contenteditable="true" class="editable-cell" onblur="app_recalculate()">' + rutaBase + '</div></td>';
-                    // Columna Select
-                    html += '<td><select class="sel-status" onchange="app_rowAction(this, \'status\')">';
-                    html += '<option value="Presente" ' + selPres + '>Presente</option>';
-                    html += '<option value="Descanso" ' + selDesc + '>Descanso</option>';
-                    html += '<option value="Ausente">Ausente</option>';
-                    html += '<option value="Feriado">Feriado</option>';
-                    html += '<option value="Fuera de Santiago">Fuera Stgo</option>';
-                    html += '</select></td>';
-                    // Columna Copiar
-                    html += '<td class="hide-exp" style="text-align:center;"><button class="btn-copy" onclick="app_copyDown(this)">⬇️</button></td>';
-                    html += '</tr>';
-                }
-
-                tbody.innerHTML = html;
-                app_loadData(); // Cargar si hay datos guardados de este mes
-                app_recalculate();
-                
-                document.getElementById('status-bar').innerText = "✅ Tabla Lista";
-
-            } catch (err) {
-                showError("Constructor Tabla: " + err.message);
+            var htmlMes = '';
+            for(var i=0; i<12; i++) {
+                var sel = (i === mesActual) ? 'selected' : '';
+                htmlMes += '<option value="' + i + '" ' + sel + '>' + mesesAnio[i] + '</option>';
             }
+            elMes.innerHTML = htmlMes;
+
+            var htmlAnio = '';
+            for(var j = anioActual - 1; j <= anioActual + 2; j++) {
+                var sel = (j === anioActual) ? 'selected' : '';
+                htmlAnio += '<option value="' + j + '" ' + sel + '>' + j + '</option>';
+            }
+            elAnio.innerHTML = htmlAnio;
         }
 
-        // --- 3. ACCIONES DE FILA (Color y Select) ---
-        function app_rowAction(elemento, accion) {
-            try {
-                var tr = elemento.parentNode.parentNode;
-                var select = tr.querySelector('.sel-status');
-                var cbY = tr.querySelector('.cb-y');
-                var cbR = tr.querySelector('.cb-r');
+        function getStorageKey() {
+            return "asistencia_" + document.getElementById('sel-anio').value + "_" + document.getElementById('sel-mes').value;
+        }
 
-                if (accion === 'status') {
-                    if (select.value === 'Fuera de Santiago') {
-                        cbY.checked = false; cbR.checked = false;
-                    }
-                } else if (accion === 'yellow' && cbY.checked) {
-                    cbR.checked = false;
-                } else if (accion === 'red' && cbR.checked) {
-                    cbY.checked = false;
-                }
+        // --- 2. CONSTRUIR TABLA ---
+        function app_buildTable() {
+            var mesIndice = parseInt(document.getElementById('sel-mes').value, 10);
+            var year = parseInt(document.getElementById('sel-anio').value, 10);
+            var totalDias = new Date(year, mesIndice + 1, 0).getDate();
 
-                app_updateRowColors(tr);
-                app_recalculate();
-            } catch (err) {
-                showError("Accion Fila: " + err.message);
+            document.getElementById('val-month').value = mesesAnio[mesIndice] + " " + year;
+
+            var tbody = document.getElementById('table-body');
+            var html = "";
+
+            for (var i = 1; i <= totalDias; i++) {
+                var fechaActual = new Date(year, mesIndice, i);
+                var diaSemana = fechaActual.getDay();
+                var esFin = (diaSemana === 0 || diaSemana === 6);
+                
+                var claseTR = esFin ? "weekend" : "";
+                var rutaBase = esFin ? "-" : "San Miguel";
+                
+                var selPres = !esFin ? "selected" : "";
+                var selDesc = esFin ? "selected" : "";
+
+                html += '<tr class="' + claseTR + '">';
+                html += '<td class="hide-exp" style="text-align:center; white-space:nowrap;">';
+                html += '<input type="checkbox" class="cbox cb-y" onchange="app_rowAction(this, \'yellow\')" style="accent-color:#d4d000;">';
+                html += '<input type="checkbox" class="cbox cb-r" onchange="app_rowAction(this, \'red\')" style="accent-color:red;">';
+                html += '</td>';
+                html += '<td>' + padZero(i) + '/' + padZero(mesIndice + 1) + '</td>';
+                html += '<td>' + diasSemana[diaSemana] + '</td>';
+                html += '<td><div contenteditable="true" class="editable-cell" onblur="app_recalculate()">' + rutaBase + '</div></td>';
+                html += '<td><select class="sel-status" onchange="app_rowAction(this, \'status\')">';
+                html += '<option value="Presente" ' + selPres + '>Presente</option>';
+                html += '<option value="Descanso" ' + selDesc + '>Descanso</option>';
+                html += '<option value="Ausente">Ausente</option>';
+                html += '<option value="Feriado">Feriado</option>';
+                html += '<option value="Fuera de Santiago">Fuera Stgo</option>';
+                html += '</select></td>';
+                html += '<td class="hide-exp" style="text-align:center;"><button class="btn-copy" onclick="app_copyDown(this)">⬇️</button></td>';
+                html += '</tr>';
             }
+
+            tbody.innerHTML = html;
+            app_loadData();
+            app_recalculate();
+            document.getElementById('status-bar').innerText = "✅ Tabla cargada correctamente";
+        }
+
+        // --- 3. ACCIONES DE FILA ---
+        function app_rowAction(elemento, accion) {
+            var tr = elemento.parentNode.parentNode;
+            var select = tr.querySelector('.sel-status');
+            var cbY = tr.querySelector('.cb-y');
+            var cbR = tr.querySelector('.cb-r');
+
+            if (accion === 'status' && select.value === 'Fuera de Santiago') {
+                cbY.checked = false; cbR.checked = false;
+            } else if (accion === 'yellow' && cbY.checked) {
+                cbR.checked = false;
+            } else if (accion === 'red' && cbR.checked) {
+                cbY.checked = false;
+            }
+
+            app_updateRowColors(tr);
+            app_recalculate();
         }
 
         function app_updateRowColors(tr) {
@@ -401,98 +315,111 @@
             var cbR = tr.querySelector('.cb-r').checked;
 
             tr.classList.remove('row-yellow', 'row-red', 'row-green');
-
-            if (select.value === 'Fuera de Santiago') {
-                tr.classList.add('row-green');
-            } else if (cbY) {
-                tr.classList.add('row-yellow');
-            } else if (cbR) {
-                tr.classList.add('row-red');
-            }
+            if (select.value === 'Fuera de Santiago') { tr.classList.add('row-green'); }
+            else if (cbY) { tr.classList.add('row-yellow'); }
+            else if (cbR) { tr.classList.add('row-red'); }
         }
 
         function app_copyDown(btn) {
-            try {
-                var trActual = btn.parentNode.parentNode;
-                var trSiguiente = trActual.nextElementSibling;
-                if (!trSiguiente) return;
+            var trActual = btn.parentNode.parentNode;
+            var trSig = trActual.nextElementSibling;
+            if (!trSig) return;
 
-                // Copiar ruta
-                trSiguiente.querySelector('.editable-cell').innerText = trActual.querySelector('.editable-cell').innerText;
-                // Copiar select
-                trSiguiente.querySelector('.sel-status').value = trActual.querySelector('.sel-status').value;
-                // Copiar checks
-                trSiguiente.querySelector('.cb-y').checked = trActual.querySelector('.cb-y').checked;
-                trSiguiente.querySelector('.cb-r').checked = trActual.querySelector('.cb-r').checked;
+            trSig.querySelector('.editable-cell').innerText = trActual.querySelector('.editable-cell').innerText;
+            trSig.querySelector('.sel-status').value = trActual.querySelector('.sel-status').value;
+            trSig.querySelector('.cb-y').checked = trActual.querySelector('.cb-y').checked;
+            trSig.querySelector('.cb-r').checked = trActual.querySelector('.cb-r').checked;
 
-                app_updateRowColors(trSiguiente);
-                app_recalculate();
-            } catch (err) {
-                showError("Copiar: " + err.message);
-            }
+            app_updateRowColors(trSig);
+            app_recalculate();
         }
 
-        // --- 4. CÁLCULO Y GUARDADO ---
+        // --- 4. CÁLCULO Y GUARDADO LOCAL ---
         function app_recalculate() {
+            var ausentesDias = 0;
+            var fueraDias = 0;
+            var fechasAusentes = [];
+
+            var filas = document.getElementById('table-body').getElementsByTagName('tr');
+            for (var i = 0; i < filas.length; i++) {
+                var select = filas[i].querySelector('.sel-status');
+                if (select) {
+                    if (select.value === 'Ausente') {
+                        ausentesDias++;
+                        fechasAusentes.push(filas[i].getElementsByTagName('td')[1].innerText);
+                    }
+                    if (select.value === 'Fuera de Santiago') { fueraDias++; }
+                }
+            }
+
+            var sueldoBase = parseNum(document.getElementById('val-sueldo').value);
+            var valorDia = Math.round(sueldoBase / 30);
+            var descuento = ausentesDias * valorDia;
+            var bono = fueraDias * 10000;
+            var totalFinal = sueldoBase - descuento + bono;
+
+            // Actualizar Interfaz
+            document.getElementById('ui-ausentes-dias').innerText = ausentesDias;
+            document.getElementById('ui-ausentes-val').innerText = formatNum(descuento);
+            
+            var uiFechasBox = document.getElementById('ui-fechas-box');
+            if (ausentesDias > 0) {
+                document.getElementById('ui-fechas-text').innerText = fechasAusentes.join(', ');
+                uiFechasBox.style.display = 'inline';
+            } else { uiFechasBox.style.display = 'none'; }
+
+            document.getElementById('ui-fuera-dias').innerText = fueraDias;
+            document.getElementById('ui-fuera-val').innerText = formatNum(bono);
+            document.getElementById('ui-total').innerText = formatNum(totalFinal);
+
+            // Actualizar Word Oculto
+            document.getElementById('doc-mes').innerText = document.getElementById('val-month').value;
+            document.getElementById('doc-nombre').innerText = document.getElementById('val-nombre').value;
+            document.getElementById('doc-cargo').innerText = document.getElementById('val-cargo').value;
+            document.getElementById('doc-empresa').innerText = document.getElementById('val-empresa').value;
+            document.getElementById('doc-sueldo').innerText = formatNum(sueldoBase);
+            document.getElementById('doc-aus-dias').innerText = ausentesDias;
+            document.getElementById('doc-aus-val').innerText = formatNum(descuento);
+            
+            var docFechasBox = document.getElementById('doc-fechas-box');
+            if (ausentesDias > 0) {
+                document.getElementById('doc-fechas').innerText = fechasAusentes.join(', ');
+                docFechasBox.style.display = 'inline';
+            } else { docFechasBox.style.display = 'none'; }
+
+            document.getElementById('doc-fue-dias').innerText = fueraDias;
+            document.getElementById('doc-fue-val').innerText = formatNum(bono);
+            document.getElementById('doc-total').innerText = formatNum(totalFinal);
+
+            app_saveData(true);
+        }
+
+        function app_saveData(silencio) {
             try {
-                var ausentesDias = 0;
-                var fueraDias = 0;
-                var fechasAusentes = [];
+                var datos = {
+                    h_nom: document.getElementById('val-nombre').value,
+                    h_car: document.getElementById('val-cargo').value,
+                    h_emp: document.getElementById('val-empresa').value,
+                    h_jor: document.getElementById('val-jornada').value,
+                    h_sue: document.getElementById('val-sueldo').value,
+                    filas: []
+                };
 
                 var filas = document.getElementById('table-body').getElementsByTagName('tr');
                 for (var i = 0; i < filas.length; i++) {
-                    var select = filas[i].querySelector('.sel-status');
-                    if (select) {
-                        if (select.value === 'Ausente') {
-                            ausentesDias++;
-                            var fechaTexto = filas[i].getElementsByTagName('td')[1].innerText;
-                            fechasAusentes.push(fechaTexto);
-                        }
-                        if (select.value === 'Fuera de Santiago') {
-                            fueraDias++;
-                        }
-                    }
+                    datos.filas.push({
+                        ruta: filas[i].querySelector('.editable-cell').innerText,
+                        estado: filas[i].querySelector('.sel-status').value,
+                        cY: filas[i].querySelector('.cb-y').checked,
+                        cR: filas[i].querySelector('.cb-r').checked
+                    });
                 }
 
-                var sueldoBase = parseNum(document.getElementById('val-sueldo').value);
-                var valorDia = Math.round(sueldoBase / 30);
-                var descuento = ausentesDias * valorDia;
-                var bono = fueraDias * 10000;
-                var totalFinal = sueldoBase - descuento + bono;
+                localStorage.setItem(getStorageKey(), JSON.stringify(datos));
+                document.getElementById('status-bar').innerText = "💾 Guardado automático";
 
-                // Actualizar Interfaz Principal
-                document.getElementById('ui-ausentes-dias').innerText = ausentesDias;
-                document.getElementById('ui-ausentes-val').innerText = formatNum(descuento);
-                
-                var uiFechasBox = document.getElementById('ui-fechas-box');
-                if (ausentesDias > 0) {
-                    document.getElementById('ui-fechas-text').innerText = fechasAusentes.join(', ');
-                    uiFechasBox.style.display = 'inline';
-                } else {
-                    uiFechasBox.style.display = 'none';
-                }
-
-                document.getElementById('ui-fuera-dias').innerText = fueraDias;
-                document.getElementById('ui-fuera-val').innerText = formatNum(bono);
-                document.getElementById('ui-total').innerText = formatNum(totalFinal);
-
-                // Actualizar Word Oculto
-                document.getElementById('doc-mes').innerText = document.getElementById('val-month').value;
-                document.getElementById('doc-nombre').innerText = document.getElementById('val-nombre').value;
-                document.getElementById('doc-cargo').innerText = document.getElementById('val-cargo').value;
-                document.getElementById('doc-empresa').innerText = document.getElementById('val-empresa').value;
-                document.getElementById('doc-sueldo').innerText = formatNum(sueldoBase);
-                
-                document.getElementById('doc-aus-dias').innerText = ausentesDias;
-                document.getElementById('doc-aus-val').innerText = formatNum(descuento);
-                var docFechasBox = document.getElementById('doc-fechas-box');
-                if (ausentesDias > 0) {
-                    document.getElementById('doc-fechas').innerText = fechasAusentes.join(', ');
-                    docFechasBox.style.display = 'inline';
-                } else {
-                    docFechasBox.style.display = 'none';
-                }
-
-                document.getElementById('doc-fue-dias').innerText = fueraDias;
-                document.getElementById('doc-fue-val').innerText = formatNum(bono);
-                document.getElementById('doc-total').innerText = formatNum(totalFinal);
+                if (!silencio) {
+                    var btnSave = document.getElementById('btn-save');
+                    btnSave.innerText = "¡Guardado!";
+                    btnSave.style.backgroundColor = "#17a2b8";
+                    setTimeout(function(){ btnSave.innerText = "Guardar Avance"; btnSave.style.backgroundC
