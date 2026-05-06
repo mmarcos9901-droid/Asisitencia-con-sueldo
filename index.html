@@ -4,485 +4,495 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia Móvil</title>
+    <!-- Librería para tomar fotos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* ESTILOS BASE PARA MÓVIL */
+        /* ESTILOS OPTIMIZADOS PARA CELULAR */
         body {
-            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background-color: #eef2f5;
             margin: 0;
             padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
 
-        /* CONTROLES SUPERIORES APILADOS PARA MÓVIL */
+        /* Si hay un error, lo mostraremos aquí */
+        #error-log {
+            display: none;
+            background: #ffdddd;
+            color: #d8000c;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            border: 1px solid #d8000c;
+        }
+
         .controls {
-            width: 100%;
-            max-width: 800px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
         .controls input[type="month"] {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 18px;
             box-sizing: border-box;
             text-align: center;
-            background-color: white;
         }
         
         button {
             width: 100%;
             border: none;
-            padding: 16px;
+            padding: 15px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             color: white;
-            transition: background-color 0.2s;
+            box-sizing: border-box;
             -webkit-appearance: none;
         }
-        button:active { opacity: 0.8; transform: scale(0.98); }
         
-        .btn-export { background-color: #28a745; }
         .btn-save { background-color: #007bff; }
+        .btn-export { background-color: #28a745; }
         .btn-salary { background-color: #dc3545; }
-
-        .status-indicator {
-            font-size: 14px;
+        .btn-copy {
+            background: none;
             color: #555;
-            font-weight: 600;
-            text-align: center;
-            background: white;
-            padding: 8px;
-            border-radius: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            word-wrap: break-word;
+            font-size: 20px;
+            padding: 5px;
+            width: auto;
+            border-radius: 0;
         }
 
-        /* CONTENEDOR DEL DOCUMENTO */
-        #document-container {
+        #status-bar {
+            text-align: center;
+            font-size: 14px;
+            color: #555;
+            padding: 8px;
             background: white;
-            padding: 20px 15px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 800px;
-            box-sizing: border-box;
+            border-radius: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             overflow: hidden;
         }
+
         h2 {
             text-align: center;
+            font-size: 18px;
             margin-top: 0;
             color: #333;
-            text-transform: uppercase;
-            font-size: 18px;
         }
 
-        /* CABECERA (DATOS PERSONALES) */
-        .header-info {
+        .header-info div {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .header-line {
-            display: flex;
-            align-items: center;
             border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            padding: 5px 0;
+            align-items: center;
         }
-        .header-line strong {
-            width: 100px;
+        .header-info strong {
+            width: 90px;
             font-size: 14px;
-            color: #555;
-            flex-shrink: 0;
+            color: #444;
         }
-        .header-line input {
+        .header-info input {
             flex: 1;
             border: none;
-            background: transparent;
-            font-size: 16px;
-            color: #000;
-            outline: none;
-            padding: 4px 0;
-            min-width: 0;
+            font-size: 15px;
+            padding: 5px;
+            width: 100%;
+            box-sizing: border-box;
         }
-        
-        /* CONTENEDOR DE TABLA CON SCROLL HORIZONTAL */
-        .table-responsive {
+
+        /* TABLA DESLIZABLE EN CELULAR */
+        .table-scroll {
             width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
+            margin-top: 15px;
+            margin-bottom: 15px;
         }
 
         table {
             width: 100%;
-            min-width: 550px;
+            min-width: 500px;
             border-collapse: collapse;
             font-size: 14px;
         }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px 4px;
-            text-align: left;
-            vertical-align: middle;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
         
-        /* CELDAS EDITABLES Y SELECTS */
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            text-align: left;
+        }
+        th { background-color: #f5f5f5; }
+        
         .editable-cell {
             width: 100%;
-            min-height: 24px;
+            min-height: 20px;
             outline: none;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            font-size: 15px;
         }
-        td select {
+        select {
             width: 100%;
             border: none;
+            font-size: 14px;
             background: transparent;
-            font-size: 15px;
-            font-family: inherit;
-            outline: none;
-            padding: 8px 0;
+            padding: 5px 0;
         }
         
-        .weekend { background-color: #fafafa; color: #666; font-style: italic; }
-
-        .row-checkbox {
-            width: 24px !important;
-            height: 24px !important;
-            margin: 0 4px;
-        }
-
-        .btn-copy {
-            background-color: transparent !important;
-            border: none !important;
-            padding: 10px !important;
-            font-size: 24px !important;
-            color: #6c757d;
-            box-shadow: none !important;
-            width: auto;
-        }
-
+        .weekend { background-color: #fafafa; color: #777; }
+        
         /* COLORES */
-        .highlighted-yellow, tr.weekend.highlighted-yellow { background-color: #eaff00 !important; }
-        .highlighted-red, tr.weekend.highlighted-red { background-color: #ff9999 !important; }
-        .highlighted-green, tr.weekend.highlighted-green { background-color: #b3ffb3 !important; }
+        .row-yellow { background-color: #eaff00 !important; }
+        .row-red { background-color: #ff9999 !important; }
+        .row-green { background-color: #b3ffb3 !important; }
         
+        .cbox { width: 20px; height: 20px; margin: 0 2px; vertical-align: middle; }
+
         /* RECUADRO DE SUELDO */
-        #salary-summary-box {
+        .salary-box {
             background-color: #e3f2fd;
             border: 1px solid #b6d4fe;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             font-size: 14px;
             color: #084298;
-            line-height: 1.6;
+            margin-top: 15px;
         }
-        .amount-total { font-size: 18px; font-weight: bold; color: #198754; display: block; margin-top: 10px; border-top: 1px dashed #b6d4fe; padding-top: 10px;}
-        .dates-detail { font-size: 13px; color: #052c65; margin-left: 10px; font-style: italic; display: none; }
+        .salary-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #198754;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #b6d4fe;
+            display: block;
+        }
 
-        /* DOCUMENTO OCULTO PARA EXPORTAR EL DETALLE TIPO WORD */
-        #hidden-word-document {
+        /* DOCUMENTO OCULTO PARA EXPORTAR */
+        #hidden-doc {
             position: absolute;
             left: -9999px;
             top: 0;
             background-color: white;
             width: 700px;
-            padding: 50px;
-            font-family: 'Times New Roman', Times, serif;
+            padding: 40px;
             color: black;
+            font-family: "Times New Roman", Times, serif;
         }
-        #hidden-word-document h1 { text-align: center; font-size: 22px; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 30px;}
-        #hidden-word-document p { font-size: 16px; line-height: 1.6; margin: 5px 0; }
-        .word-table { width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 16px; }
-        .word-table td { padding: 10px 5px; border-bottom: 1px solid #ddd; border: none; vertical-align: top; }
-        .word-table .amount { text-align: right; font-weight: bold; }
-        .word-table .total-row td { border-top: 2px solid black; font-size: 18px; font-weight: bold; padding-top: 15px; }
-        .doc-dates { font-size: 13px; color: #666; font-style: italic; display: block; margin-top: 4px; }
-
-        @media (min-width: 600px) {
-            .controls { flex-direction: row; }
-            .controls button { width: auto; }
-            table { min-width: 100%; }
-        }
+        #hidden-doc h1 { text-align: center; border-bottom: 2px solid black; }
+        .doc-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 16px; }
+        .doc-table td { padding: 10px; border-bottom: 1px solid #ccc; }
+        .doc-table .right { text-align: right; font-weight: bold; }
+        .doc-table .total { border-top: 2px solid black; font-size: 18px; }
     </style>
 </head>
-<!-- Se quitó el onload del body para evitar bloqueos del navegador -->
 <body>
 
+    <div id="error-log"></div>
+
     <div class="controls">
-        <input type="month" id="monthPicker" onchange="handleMonthChange()">
-        <button class="btn-save" id="btn-save" onclick="saveDataLocally()">Guardar Avance</button>
-        <button class="btn-export" onclick="exportToImage()">Exportar Asistencia</button>
-        <button class="btn-salary" onclick="exportSalaryDetail()">Descargar Liquidación</button>
-        <span class="status-indicator" id="local-status">Cargando la aplicación...</span>
+        <input type="month" id="inp-month" onchange="app_buildTable()">
+        <button class="btn-save" id="btn-save" onclick="app_saveData()">Guardar Datos</button>
+        <button class="btn-export" onclick="app_exportAssistance()">Exportar Asistencia</button>
+        <button class="btn-salary" onclick="app_exportSalary()">Descargar Liquidación</button>
+        <div id="status-bar">Iniciando aplicación...</div>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div id="document-container">
+    <div class="card" id="main-card">
         <h2>Registro de Asistencia</h2>
         
         <div class="header-info">
-            <div class="header-line">
-                <strong>Mes:</strong> 
-                <input type="text" id="displayMonth" value="" readonly>
-            </div>
-            <div class="header-line">
-                <strong>Nombre:</strong> 
-                <input type="text" id="input-nombre" value="Marcos Méndez" onblur="saveDataLocally(true); calculateSalary()">
-            </div>
-            <div class="header-line">
-                <strong>Cargo:</strong> 
-                <input type="text" id="input-cargo" value="Conductor" onblur="saveDataLocally(true); calculateSalary()">
-            </div>
-            <div class="header-line">
-                <strong>Empresa:</strong> 
-                <input type="text" id="input-empresa" value="Transportes Uribe" onblur="saveDataLocally(true); calculateSalary()">
-            </div>
-            <div class="header-line">
-                <strong>Jornada:</strong> 
-                <input type="text" id="input-jornada" value="Lunes a Viernes" onblur="saveDataLocally(true)">
-            </div>
-            <div class="header-line">
-                <strong>Sueldo Base:</strong> 
-                <input type="text" id="input-sueldo" value="800.000" onblur="formatInputSueldo(this); saveDataLocally(true)">
-            </div>
+            <div><strong>Mes:</strong> <input type="text" id="val-month" readonly></div>
+            <div><strong>Nombre:</strong> <input type="text" id="val-nombre" value="Marcos Méndez" onblur="app_recalculate()"></div>
+            <div><strong>Cargo:</strong> <input type="text" id="val-cargo" value="Conductor" onblur="app_recalculate()"></div>
+            <div><strong>Empresa:</strong> <input type="text" id="val-empresa" value="Transportes Uribe" onblur="app_recalculate()"></div>
+            <div><strong>Jornada:</strong> <input type="text" id="val-jornada" value="Lunes a Viernes" onblur="app_saveData()"></div>
+            <div><strong>Sueldo: $</strong> <input type="text" id="val-sueldo" value="800.000" onblur="app_formatSueldo(this)"></div>
         </div>
 
-        <div class="table-responsive" id="table-wrapper">
-            <table id="main-table">
+        <div class="table-scroll" id="table-wrapper">
+            <table id="the-table">
                 <thead>
                     <tr>
-                        <th width="10%" class="export-hide" style="text-align: center;">🎨</th>
+                        <th width="10%" class="hide-exp" style="text-align:center;">🎨</th>
                         <th width="15%">Fecha</th>
                         <th width="15%">Día</th>
-                        <th width="30%">Ruta</th> 
+                        <th width="30%">Ruta</th>
                         <th width="20%">Estado</th>
-                        <th width="10%" class="export-hide" style="text-align: center;">⬇️</th>
+                        <th width="10%" class="hide-exp" style="text-align:center;">⬇️</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                    <!-- Filas se generan por JS -->
+                <tbody id="table-body">
+                    <!-- Filas JS -->
                 </tbody>
             </table>
         </div>
 
-        <!-- RECUADRO DE CÁLCULO DE SUELDO -->
-        <div id="salary-summary-box" class="export-hide">
-            <strong>Desglose Mensual:</strong><br>
-            Ausencias (<span id="live-ausentes">0</span>): <span style="color: red;">-$<span id="live-descuento">0</span></span><br>
-            <div id="live-fechas-container" class="dates-detail">Fechas: <span id="live-fechas-ausentes"></span></div>
-            Fuera de Stgo (<span id="live-fuera">0</span>): <span style="color: green;">+$<span id="live-bono">0</span></span><br>
-            <span class="amount-total">A Pagar: $<span id="live-total">800.000</span></span>
+        <div class="salary-box hide-exp">
+            <strong>Resumen del Mes:</strong><br><br>
+            Ausencias (<span id="ui-ausentes-dias">0</span>): <span style="color:red">-$<span id="ui-ausentes-val">0</span></span><br>
+            <span id="ui-fechas-box" style="display:none; font-size:12px; color:#555;">Días: <span id="ui-fechas-text"></span><br></span>
+            <br>
+            Fuera Stgo (<span id="ui-fuera-dias">0</span>): <span style="color:green">+$<span id="ui-fuera-val">0</span></span><br>
+            <span class="salary-total">A Pagar: $<span id="ui-total">800.000</span></span>
         </div>
     </div>
 
-    <!-- DOCUMENTO OCULTO TIPO WORD PARA LA LIQUIDACIÓN -->
-    <div id="hidden-word-document">
+    <!-- DOCUMENTO WORD OCULTO -->
+    <div id="hidden-doc">
         <h1>DETALLE DE REMUNERACIÓN</h1>
-        <p><strong>Mes correspondiente:</strong> <span id="doc-mes"></span></p>
-        <p><strong>Nombre del Trabajador:</strong> <span id="doc-nombre"></span></p>
+        <p><strong>Mes:</strong> <span id="doc-mes"></span></p>
+        <p><strong>Trabajador:</strong> <span id="doc-nombre"></span></p>
         <p><strong>Cargo:</strong> <span id="doc-cargo"></span></p>
         <p><strong>Empresa:</strong> <span id="doc-empresa"></span></p>
         
-        <table class="word-table">
+        <table class="doc-table">
             <tr>
                 <td>Sueldo Base Mensual</td>
-                <td class="amount">$<span id="doc-sueldo-base">800.000</span></td>
+                <td class="right">$<span id="doc-sueldo">800.000</span></td>
             </tr>
             <tr>
                 <td>
-                    Descuento por Inasistencia (<span id="doc-dias-ausentes">0</span> días)
-                    <span id="doc-fechas-container" class="doc-dates" style="display: none;">Fechas: <span id="doc-fechas-ausentes"></span></span>
+                    Descuento Inasistencia (<span id="doc-aus-dias">0</span> días)<br>
+                    <span id="doc-fechas-box" style="display:none; font-size:13px; color:#666;">Fechas: <span id="doc-fechas"></span></span>
                 </td>
-                <td class="amount" style="color: red;">-$<span id="doc-descuento">0</span></td>
+                <td class="right" style="color:red">-$<span id="doc-aus-val">0</span></td>
             </tr>
             <tr>
-                <td>Bono Fuera de Santiago (<span id="doc-dias-fuera">0</span> días x $10.000)</td>
-                <td class="amount" style="color: green;">+$<span id="doc-bono">0</span></td>
+                <td>Bono Fuera de Santiago (<span id="doc-fue-dias">0</span> días)</td>
+                <td class="right" style="color:green">+$<span id="doc-fue-val">0</span></td>
             </tr>
-            <tr class="total-row">
+            <tr class="total">
                 <td>LÍQUIDO A PAGAR</td>
-                <td class="amount">$<span id="doc-total">800.000</span></td>
+                <td class="right">$<span id="doc-total">800.000</span></td>
             </tr>
         </table>
-        <br><br><br>
-        <p style="text-align: center; color: #555; font-size: 14px;">Este documento es un detalle informativo generado automáticamente por el registro de asistencia.</p>
+        <p style="text-align:center; font-size:12px; color:#666; margin-top:50px;">Documento generado por App de Asistencia.</p>
     </div>
 
-    <!-- Librería movida al final para evitar que bloquee la página -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <script>
-        // JS Clásico (Universal) a prueba de errores de celular
-        var daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; 
-        var monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        // --- 1. CONFIGURACIÓN UNIVERSAL ---
+        var diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        var mesesAnio = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        }
-        function parseNumber(str) {
-            return parseInt(str.replace(/\./g, '')) || 0;
-        }
-        function pad2(num) {
-            return (num < 10 ? '0' : '') + num;
+        function showError(msg) {
+            var log = document.getElementById('error-log');
+            log.style.display = 'block';
+            log.innerText = "Error: " + msg;
         }
 
-        function formatInputSueldo(input) {
-            var val = parseNumber(input.value);
-            input.value = formatNumber(val);
-            calculateSalary();
+        function formatNum(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        var SafeStorage = {
-            save: function(key, data) {
-                try {
-                    localStorage.setItem(key, JSON.stringify(data));
-                    return true;
-                } catch (e) {
-                    return false; 
-                }
-            },
-            load: function(key) {
-                try {
-                    var item = localStorage.getItem(key);
-                    return item ? JSON.parse(item) : null;
-                } catch (e) {
-                    return null;
-                }
-            }
-        };
+        function parseNum(str) {
+            var parsed = parseInt(str.replace(/\./g, ''), 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
 
-        function iniciarAplicacion() {
+        function padZero(n) {
+            return n < 10 ? '0' + n : n;
+        }
+
+        function app_formatSueldo(input) {
+            var valor = parseNum(input.value);
+            input.value = formatNum(valor);
+            app_recalculate();
+        }
+
+        // --- 2. CONSTRUCCIÓN DE LA TABLA ---
+        function app_buildTable() {
             try {
-                var today = new Date();
-                var year = today.getFullYear();
-                var month = pad2(today.getMonth() + 1);
-                
-                var monthPicker = document.getElementById('monthPicker');
-                monthPicker.value = year + "-" + month;
-                
-                document.getElementById('local-status').innerText = "Iniciando tabla...";
-                handleMonthChange();
-            } catch (error) {
-                document.getElementById('local-status').innerText = "Error init: " + error.message;
-            }
-        }
+                var valMonth = document.getElementById('inp-month').value;
+                if (!valMonth) return;
 
-        function handleMonthChange() {
-            try {
-                var monthPicker = document.getElementById('monthPicker').value;
-                if (!monthPicker) return;
+                var partes = valMonth.split('-');
+                var year = parseInt(partes[0], 10);
+                var month = parseInt(partes[1], 10);
+                var totalDias = new Date(year, month, 0).getDate();
 
-                var parts = monthPicker.split('-');
-                var year = parseInt(parts[0], 10);
-                var month = parseInt(parts[1], 10);
-                
-                var totalDays = new Date(year, month, 0).getDate();
-                
-                document.getElementById('displayMonth').value = monthsInSpanish[month - 1] + " " + year;
+                document.getElementById('val-month').value = mesesAnio[month - 1] + " " + year;
 
-                var tbody = document.getElementById('tableBody');
-                var htmlContent = "";
+                var tbody = document.getElementById('table-body');
+                var html = "";
 
-                for (var i = 1; i <= totalDays; i++) {
-                    var currentDate = new Date(year, month - 1, i);
-                    var dayOfWeek = currentDate.getDay();
-                    var isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-                    var classWeekend = isWeekend ? ' class="weekend"' : '';
-                    var routeValue = isWeekend ? '-' : 'San Miguel';
+                for (var i = 1; i <= totalDias; i++) {
+                    var fechaActual = new Date(year, month - 1, i);
+                    var diaSemana = fechaActual.getDay();
+                    var esFin = (diaSemana === 0 || diaSemana === 6);
                     
-                    var selPresente = !isWeekend ? 'selected' : '';
-                    var selDescanso = isWeekend ? 'selected' : '';
+                    var claseTR = esFin ? "weekend" : "";
+                    var rutaBase = esFin ? "-" : "San Miguel";
+                    
+                    var selPres = !esFin ? "selected" : "";
+                    var selDesc = esFin ? "selected" : "";
 
-                    htmlContent += '<tr' + classWeekend + '>';
-                    htmlContent += '<td class="export-hide" style="text-align: center; white-space: nowrap;">';
-                    htmlContent += '<input type="checkbox" onchange="toggleHighlight(this, \'yellow\')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;">';
-                    htmlContent += '<input type="checkbox" onchange="toggleHighlight(this, \'red\')" class="row-checkbox cb-red" style="accent-color: red;">';
-                    htmlContent += '</td>';
-                    htmlContent += '<td>' + pad2(i) + '/' + pad2(month) + '</td>';
-                    htmlContent += '<td>' + daysInSpanish[dayOfWeek] + '</td>';
-                    htmlContent += '<td><div contenteditable="true" class="editable-cell" onblur="saveDataLocally(true)">' + routeValue + '</div></td>';
-                    htmlContent += '<td><select onchange="handleStatusChange(this)">';
-                    htmlContent += '<option value="Presente" ' + selPresente + '>Presente</option>';
-                    htmlContent += '<option value="Descanso" ' + selDescanso + '>Descanso</option>';
-                    htmlContent += '<option value="Ausente">Ausente</option>';
-                    htmlContent += '<option value="Feriado">Feriado</option>';
-                    htmlContent += '<option value="Fuera de Santiago">Fuera Stgo</option>';
-                    htmlContent += '</select></td>';
-                    htmlContent += '<td class="export-hide" style="text-align: center;"><button class="btn-copy" onclick="copyToNextRow(this)">⬇️</button></td>';
-                    htmlContent += '</tr>';
+                    html += '<tr class="' + claseTR + '">';
+                    // Columna Checkboxes
+                    html += '<td class="hide-exp" style="text-align:center; white-space:nowrap;">';
+                    html += '<input type="checkbox" class="cbox cb-y" onchange="app_rowAction(this, \'yellow\')">';
+                    html += '<input type="checkbox" class="cbox cb-r" onchange="app_rowAction(this, \'red\')">';
+                    html += '</td>';
+                    // Columnas de Texto
+                    html += '<td>' + padZero(i) + '/' + padZero(month) + '</td>';
+                    html += '<td>' + diasSemana[diaSemana] + '</td>';
+                    html += '<td><div contenteditable="true" class="editable-cell" onblur="app_recalculate()">' + rutaBase + '</div></td>';
+                    // Columna Select
+                    html += '<td><select class="sel-status" onchange="app_rowAction(this, \'status\')">';
+                    html += '<option value="Presente" ' + selPres + '>Presente</option>';
+                    html += '<option value="Descanso" ' + selDesc + '>Descanso</option>';
+                    html += '<option value="Ausente">Ausente</option>';
+                    html += '<option value="Feriado">Feriado</option>';
+                    html += '<option value="Fuera de Santiago">Fuera Stgo</option>';
+                    html += '</select></td>';
+                    // Columna Copiar
+                    html += '<td class="hide-exp" style="text-align:center;"><button class="btn-copy" onclick="app_copyDown(this)">⬇️</button></td>';
+                    html += '</tr>';
                 }
+
+                tbody.innerHTML = html;
+                app_loadData(); // Cargar si hay datos guardados de este mes
+                app_recalculate();
                 
-                tbody.innerHTML = htmlContent;
+                document.getElementById('status-bar').innerText = "✅ Tabla Lista";
 
-                loadDataLocally(monthPicker);
-                calculateSalary();
-                document.getElementById('local-status').innerText = "Lista generada correctamente";
-                setTimeout(function(){ document.getElementById('local-status').innerText = "✅ Listo para usar"; }, 2000);
-
-            } catch (error) {
-                document.getElementById('local-status').innerText = "Fallo en tabla: " + error.message;
+            } catch (err) {
+                showError("Constructor Tabla: " + err.message);
             }
         }
 
-        function copyToNextRow(btn) {
-            var currentTr = btn.parentNode.parentNode;
-            var nextTr = currentTr.nextElementSibling;
-            if (!nextTr) return; 
-            
-            nextTr.querySelector('.editable-cell').innerText = currentTr.querySelector('.editable-cell').innerText;
-            
-            var nextSelect = nextTr.querySelector('select');
-            nextSelect.value = currentTr.querySelector('select').value;
-            
-            var currentYellow = currentTr.querySelector('.cb-yellow').checked;
-            var currentRed = currentTr.querySelector('.cb-red').checked;
-            
-            var nextYellowCb = nextTr.querySelector('.cb-yellow');
-            var nextRedCb = nextTr.querySelector('.cb-red');
-            
-            nextYellowCb.checked = currentYellow;
-            nextRedCb.checked = currentRed;
-            
-            nextTr.classList.remove('highlighted-yellow', 'highlighted-red', 'highlighted-green');
-            
-            if (nextSelect.value === 'Fuera de Santiago') {
-                nextTr.classList.add('highlighted-green');
-                nextYellowCb.checked = false;
-                nextRedCb.checked = false;
-            } else if (currentYellow) {
-                nextTr.classList.add('highlighted-yellow');
-            } else if (currentRed) {
-                nextTr.classList.add('highlighted-red');
+        // --- 3. ACCIONES DE FILA (Color y Select) ---
+        function app_rowAction(elemento, accion) {
+            try {
+                var tr = elemento.parentNode.parentNode;
+                var select = tr.querySelector('.sel-status');
+                var cbY = tr.querySelector('.cb-y');
+                var cbR = tr.querySelector('.cb-r');
+
+                if (accion === 'status') {
+                    if (select.value === 'Fuera de Santiago') {
+                        cbY.checked = false; cbR.checked = false;
+                    }
+                } else if (accion === 'yellow' && cbY.checked) {
+                    cbR.checked = false;
+                } else if (accion === 'red' && cbR.checked) {
+                    cbY.checked = false;
+                }
+
+                app_updateRowColors(tr);
+                app_recalculate();
+            } catch (err) {
+                showError("Accion Fila: " + err.message);
             }
-            
-            saveDataLocally(true);
-            calculateSalary();
         }
 
-        function handleStatusChange(selectElement) {
-            var tr = selectElement.parentNode.parentNode;
-            if (selectElement.value === 'Fuera de Santiago') {
-                tr.classList.add('highlighted-green');
-                var yellowCb = tr.querySelector('.cb-yellow');
-                var redCb = tr.querySelector('.cb-red');
-                if (yellowCb) yellowCb.checked = false;
-                if (redCb) redCb.checked = false;
-                tr.classList.remove('hig
+        function app_updateRowColors(tr) {
+            var select = tr.querySelector('.sel-status');
+            var cbY = tr.querySelector('.cb-y').checked;
+            var cbR = tr.querySelector('.cb-r').checked;
+
+            tr.classList.remove('row-yellow', 'row-red', 'row-green');
+
+            if (select.value === 'Fuera de Santiago') {
+                tr.classList.add('row-green');
+            } else if (cbY) {
+                tr.classList.add('row-yellow');
+            } else if (cbR) {
+                tr.classList.add('row-red');
+            }
+        }
+
+        function app_copyDown(btn) {
+            try {
+                var trActual = btn.parentNode.parentNode;
+                var trSiguiente = trActual.nextElementSibling;
+                if (!trSiguiente) return;
+
+                // Copiar ruta
+                trSiguiente.querySelector('.editable-cell').innerText = trActual.querySelector('.editable-cell').innerText;
+                // Copiar select
+                trSiguiente.querySelector('.sel-status').value = trActual.querySelector('.sel-status').value;
+                // Copiar checks
+                trSiguiente.querySelector('.cb-y').checked = trActual.querySelector('.cb-y').checked;
+                trSiguiente.querySelector('.cb-r').checked = trActual.querySelector('.cb-r').checked;
+
+                app_updateRowColors(trSiguiente);
+                app_recalculate();
+            } catch (err) {
+                showError("Copiar: " + err.message);
+            }
+        }
+
+        // --- 4. CÁLCULO Y GUARDADO ---
+        function app_recalculate() {
+            try {
+                var ausentesDias = 0;
+                var fueraDias = 0;
+                var fechasAusentes = [];
+
+                var filas = document.getElementById('table-body').getElementsByTagName('tr');
+                for (var i = 0; i < filas.length; i++) {
+                    var select = filas[i].querySelector('.sel-status');
+                    if (select) {
+                        if (select.value === 'Ausente') {
+                            ausentesDias++;
+                            var fechaTexto = filas[i].getElementsByTagName('td')[1].innerText;
+                            fechasAusentes.push(fechaTexto);
+                        }
+                        if (select.value === 'Fuera de Santiago') {
+                            fueraDias++;
+                        }
+                    }
+                }
+
+                var sueldoBase = parseNum(document.getElementById('val-sueldo').value);
+                var valorDia = Math.round(sueldoBase / 30);
+                var descuento = ausentesDias * valorDia;
+                var bono = fueraDias * 10000;
+                var totalFinal = sueldoBase - descuento + bono;
+
+                // Actualizar Interfaz Principal
+                document.getElementById('ui-ausentes-dias').innerText = ausentesDias;
+                document.getElementById('ui-ausentes-val').innerText = formatNum(descuento);
+                
+                var uiFechasBox = document.getElementById('ui-fechas-box');
+                if (ausentesDias > 0) {
+                    document.getElementById('ui-fechas-text').innerText = fechasAusentes.join(', ');
+                    uiFechasBox.style.display = 'inline';
+                } else {
+                    uiFechasBox.style.display = 'none';
+                }
+
+                document.getElementById('ui-fuera-dias').innerText = fueraDias;
+                document.getElementById('ui-fuera-val').innerText = formatNum(bono);
+                document.getElementById('ui-total').innerText = formatNum(totalFinal);
+
+                // Actualizar Word Oculto
+                document.getElementById('doc-mes').innerText = document.getElementById('val-month').value;
+                document.getElementById('doc-nombre').innerText = document.getElementById('val-nombre').value;
+                document.getElementById('doc-cargo').innerText = document.getElementById('val-cargo').value;
+                document.getElementById('doc-empresa').innerText = document.getElementById('val-empresa').value;
+                document.getElementById('doc-sueldo').innerText = formatNum(sueldoBase);
+                
+                document.getElementById('doc-aus-dias').innerText = ausentesDias;
+                document.getElementById('doc-aus-val').innerText = formatNum(descuento);
+                var docFechasBox = document.getElementById('doc-fechas-box');
+                if (ausentesDias > 0) {
+                    document.getElementById('doc-fechas').innerText = fechasAusentes.join(', ');
+                    docFechasBox.style.display = 'inline';
+                } else {
+                    docFechasBox.style.display = 'none';
+                }
+
+                document.getElementById('doc-fue-dias').innerText = fueraDias;
+                document.getElementById('doc-fue-val').innerText = formatNum(bono);
+                document.getElementById('doc-total').innerText = formatNum(totalFinal);
