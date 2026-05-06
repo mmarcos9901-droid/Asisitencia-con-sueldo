@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Meta tag crucial para celulares: Evita el zoom no deseado -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Asistencia Móvil</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -23,7 +22,7 @@
             width: 100%;
             max-width: 800px;
             display: flex;
-            flex-direction: column; /* Apilados en celular */
+            flex-direction: column;
             gap: 12px;
             margin-bottom: 20px;
         }
@@ -33,13 +32,13 @@
             padding: 14px;
             border: 1px solid #ccc;
             border-radius: 8px;
-            font-size: 18px; /* Grande para celular */
+            font-size: 18px;
             box-sizing: border-box;
             text-align: center;
         }
         
         button {
-            width: 100%; /* Botones de ancho completo */
+            width: 100%;
             border: none;
             padding: 16px;
             border-radius: 8px;
@@ -76,7 +75,7 @@
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
-            overflow: hidden; /* Evita que el contenedor principal se rompa */
+            overflow: hidden;
         }
         h2 {
             text-align: center;
@@ -109,31 +108,31 @@
             flex: 1;
             border: none;
             background: transparent;
-            font-size: 16px; /* Evita zoom en iOS */
+            font-size: 16px;
             color: #000;
             outline: none;
             padding: 4px 0;
-            min-width: 0; /* Permite encoger el input si es necesario */
+            min-width: 0;
         }
         
         /* CONTENEDOR DE TABLA CON SCROLL HORIZONTAL PARA MÓVIL */
         .table-responsive {
             width: 100%;
-            overflow-x: auto; /* Permite deslizar a los lados */
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iPhone */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             margin-bottom: 20px;
             border: 1px solid #ddd;
         }
 
         table {
             width: 100%;
-            min-width: 550px; /* Ancho mínimo para que no se aplaste en celulares */
+            min-width: 550px;
             border-collapse: collapse;
             font-size: 14px;
         }
         th, td {
             border: 1px solid #ccc;
-            padding: 10px 4px; /* Mayor área táctil vertical */
+            padding: 10px 4px;
             text-align: left;
             vertical-align: middle;
         }
@@ -143,7 +142,7 @@
             top: 0;
         }
         
-        /* CELDAS EDITABLES Y SELECTS (TOUCH-FRIENDLY) */
+        /* CELDAS EDITABLES Y SELECTS */
         .editable-cell {
             width: 100%;
             min-height: 24px;
@@ -156,27 +155,25 @@
             width: 100%;
             border: none;
             background: transparent;
-            font-size: 15px; /* Importante para móvil */
+            font-size: 15px;
             font-family: inherit;
             outline: none;
-            padding: 8px 0; /* Área más grande para el dedo */
+            padding: 8px 0;
         }
         
         .weekend { background-color: #fafafa; color: #666; font-style: italic; }
 
-        /* CHECKBOXES GRANDES PARA EL DEDO */
         .row-checkbox {
             width: 24px !important;
             height: 24px !important;
             margin: 0 4px;
         }
 
-        /* BOTÓN FLECHA GRANDE */
         .btn-copy {
             background-color: transparent;
             border: none;
             padding: 10px !important;
-            font-size: 24px !important; /* Flecha gigante */
+            font-size: 24px !important;
             color: #6c757d;
         }
 
@@ -217,7 +214,6 @@
         .word-table .total-row td { border-top: 2px solid black; font-size: 18px; font-weight: bold; padding-top: 15px; }
         .doc-dates { font-size: 13px; color: #666; font-style: italic; display: block; margin-top: 4px; }
 
-        /* Pantallas más grandes (Tablets/Desktop) */
         @media (min-width: 600px) {
             .controls { flex-direction: row; }
             .controls button { width: auto; }
@@ -328,10 +324,9 @@
     </div>
 
     <script>
-        const daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; // Abreviados para celular
+        const daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; 
         const monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // --- UTILIDADES ---
         window.formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         window.parseNumber = (str) => parseInt(str.replace(/\./g, '')) || 0;
 
@@ -341,7 +336,6 @@
             window.calculateSalary();
         };
 
-        // --- COPIAR AL DÍA SIGUIENTE ---
         window.copyToNextRow = function(btn) {
             const currentTr = btn.closest('tr');
             const nextTr = currentTr.nextElementSibling;
@@ -377,7 +371,6 @@
             window.calculateSalary();
         };
 
-        // --- CÁLCULO DE SUELDO Y BONOS ---
         window.calculateSalary = function() {
             let absentDays = 0;
             let outsideDays = 0;
@@ -403,7 +396,6 @@
             let bono = outsideDays * 10000;
             let total = sueldoBase - descuento + bono;
 
-            // Actualizar Front-End
             document.getElementById('live-ausentes').innerText = absentDays;
             document.getElementById('live-descuento').innerText = window.formatNumber(descuento);
             
@@ -419,7 +411,6 @@
             document.getElementById('live-bono').innerText = window.formatNumber(bono);
             document.getElementById('live-total').innerText = window.formatNumber(total);
 
-            // Actualizar Word Oculto
             document.getElementById('doc-mes').innerText = document.getElementById('displayMonth').value;
             document.getElementById('doc-nombre').innerText = document.getElementById('input-nombre').value;
             document.getElementById('doc-cargo').innerText = document.getElementById('input-cargo').value;
@@ -441,7 +432,6 @@
             document.getElementById('doc-total').innerText = window.formatNumber(total);
         };
 
-        // --- MANEJO DE ESTADOS Y COLORES ---
         window.handleStatusChange = function(selectElement) {
             const tr = selectElement.closest('tr');
             if (selectElement.value === 'Fuera de Santiago') {
@@ -469,4 +459,25 @@
                 tr.classList.remove('highlighted-red', 'highlighted-green');
                 tr.classList.add('highlighted-yellow');
             } else if (color === 'red' && checkbox.checked) {
-    
+                if(yellowCb) yellowCb.checked = false;
+                tr.classList.remove('highlighted-yellow', 'highlighted-green');
+                tr.classList.add('highlighted-red');
+            } else {
+                tr.classList.remove('highlighted-yellow', 'highlighted-red');
+                if (select && select.value === 'Fuera de Santiago') {
+                    tr.classList.add('highlighted-green');
+                }
+            }
+            window.saveDataLocally(true);
+        };
+
+        window.handleMonthChange = function() {
+            try {
+                const monthPicker = document.getElementById('monthPicker').value;
+                if (!monthPicker) return;
+
+                const [year, month] = monthPicker.split('-');
+                const date = new Date(year, month - 1, 1);
+                const totalDays = new Date(year, month, 0).getDate();
+                
+                document.getEl
