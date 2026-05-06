@@ -1,0 +1,555 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Asistencia</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .controls input[type="month"] {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background-color 0.2s, transform 0.1s;
+            color: white;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .btn-export { background-color: #28a745; }
+        .btn-export:hover { background-color: #218838; }
+        
+        .btn-save { background-color: #007bff; }
+        .btn-save:hover { background-color: #0069d9; }
+
+        .btn-salary { background-color: #dc3545; }
+        .btn-salary:hover { background-color: #c82333; }
+
+        .status-indicator {
+            font-size: 14px;
+            color: #555;
+            font-weight: 600;
+            margin-left: auto;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        #document-container {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #333;
+            text-transform: uppercase;
+            font-size: 20px;
+        }
+        .header-info {
+            margin-bottom: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .header-info strong {
+            display: inline-block;
+            width: 100px;
+        }
+        
+        input.clean-input, select.clean-input {
+            border: none;
+            border-bottom: 1px dashed transparent;
+            background: transparent;
+            font-size: 15px;
+            font-family: inherit;
+            color: #333;
+            width: calc(100% - 110px);
+            outline: none;
+        }
+        input.clean-input:focus, input.clean-input:hover {
+            border-bottom: 1px dashed #ccc;
+            background: #f9f9f9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        
+        .editable-cell {
+            width: 100%;
+            min-height: 20px;
+            outline: none;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .editable-cell:hover, .editable-cell:focus {
+            background: rgba(0,0,0,0.02);
+        }
+
+        td select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            padding: 2px 0;
+            cursor: pointer;
+        }
+        td select:hover { background: rgba(0,0,0,0.02); }
+        
+        .weekend {
+            background-color: #fafafa;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* ESTILOS DEL SUBRAYADOR FLUORESCENTE Y ROJO */
+        .highlighted-yellow, 
+        tr.weekend.highlighted-yellow {
+            background-color: #eaff00 !important;
+            transition: background-color 0.3s ease;
+        }
+        .highlighted-red, 
+        tr.weekend.highlighted-red {
+            background-color: #ff9999 !important;
+            transition: background-color 0.3s ease;
+        }
+        .row-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        /* RECUADRO DE SUELDO (VISTA PRINCIPAL) */
+        #salary-summary-box {
+            background-color: #e3f2fd;
+            border: 1px solid #b6d4fe;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #084298;
+            line-height: 1.5;
+        }
+        #salary-summary-box strong { color: #052c65; }
+        .amount-total { font-size: 18px; font-weight: bold; color: #198754; }
+
+        /* DOCUMENTO OCULTO PARA EXPORTAR EL DETALLE TIPO WORD */
+        #hidden-word-document {
+            position: absolute;
+            left: -9999px; /* Mantiene el elemento fuera de la pantalla pero renderizable */
+            top: 0;
+            background-color: white;
+            width: 700px;
+            padding: 50px;
+            font-family: 'Times New Roman', Times, serif; /* Fuente formal tipo Word */
+            color: black;
+        }
+        #hidden-word-document h1 {
+            text-align: center;
+            font-size: 22px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        #hidden-word-document p { font-size: 16px; line-height: 1.6; margin: 5px 0; }
+        .word-table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+            font-size: 16px;
+        }
+        .word-table td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #ddd;
+            border: none;
+        }
+        .word-table .amount { text-align: right; font-weight: bold; }
+        .word-table .total-row td {
+            border-top: 2px solid black;
+            font-size: 18px;
+            font-weight: bold;
+            padding-top: 15px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <input type="month" id="monthPicker" onchange="handleMonthChange()">
+        <button class="btn-save" id="btn-save" onclick="window.saveDataLocally()">Guardar</button>
+        <button class="btn-export" onclick="exportToImage()">Exportar Asistencia</button>
+        <button class="btn-salary" onclick="exportSalaryDetail()">Descargar Liquidación</button>
+        <span class="status-indicator" id="local-status">Cargando...</span>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL (ASISTENCIA) -->
+    <div id="document-container">
+        <h2>Registro de Asistencia y Ruta</h2>
+        
+        <div class="header-info">
+            <strong>Mes:</strong> <input type="text" id="displayMonth" class="clean-input" value="" readonly><br>
+            <strong>Nombre:</strong> <input type="text" id="input-nombre" class="clean-input" value="Marcos Méndez" onblur="window.saveDataLocally(true); window.calculateSalary()"><br>
+            <strong>Cargo:</strong> <input type="text" id="input-cargo" class="clean-input" value="Conductor" onblur="window.saveDataLocally(true); window.calculateSalary()"><br>
+            <strong>Empresa:</strong> <input type="text" id="input-empresa" class="clean-input" value="Transportes Uribe" onblur="window.saveDataLocally(true); window.calculateSalary()"><br>
+            <strong>Jornada:</strong> <input type="text" id="input-jornada" class="clean-input" value="Lunes a Viernes" onblur="window.saveDataLocally(true)"><br>
+            <strong>Sueldo Base:</strong> $<input type="text" id="input-sueldo" class="clean-input" value="800.000" onblur="window.formatInputSueldo(this); window.saveDataLocally(true)">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="8%" class="export-hide" style="text-align: center;">🎨</th>
+                    <th width="12%">Fecha</th>
+                    <th width="15%">Día</th>
+                    <th width="40%">Ruta</th> 
+                    <th width="25%">Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Filas generadas por JS -->
+            </tbody>
+        </table>
+
+        <!-- RECUADRO DE CÁLCULO DE SUELDO AL FINAL (Se oculta al exportar la asistencia) -->
+        <div id="salary-summary-box" class="export-hide">
+            <strong>Desglose Mensual:</strong><br>
+            Días Ausentes Registrados: <span id="live-ausentes">0</span><br>
+            Descuento aplicado: -$<span id="live-descuento">0</span><br>
+            <span class="amount-total">Total a Pagar Estimado: $<span id="live-total">800.000</span></span>
+        </div>
+    </div>
+
+    <!-- DOCUMENTO OCULTO TIPO WORD PARA LA LIQUIDACIÓN -->
+    <div id="hidden-word-document">
+        <h1>DETALLE DE REMUNERACIÓN</h1>
+        <p><strong>Mes correspondiente:</strong> <span id="doc-mes"></span></p>
+        <p><strong>Nombre del Trabajador:</strong> <span id="doc-nombre"></span></p>
+        <p><strong>Cargo:</strong> <span id="doc-cargo"></span></p>
+        <p><strong>Empresa:</strong> <span id="doc-empresa"></span></p>
+        
+        <table class="word-table">
+            <tr>
+                <td>Sueldo Base Mensual</td>
+                <td class="amount">$<span id="doc-sueldo-base">800.000</span></td>
+            </tr>
+            <tr>
+                <td>Descuento por Inasistencia (<span id="doc-dias-ausentes">0</span> días)</td>
+                <td class="amount" style="color: red;">-$<span id="doc-descuento">0</span></td>
+            </tr>
+            <tr class="total-row">
+                <td>LÍQUIDO A PAGAR</td>
+                <td class="amount">$<span id="doc-total">800.000</span></td>
+            </tr>
+        </table>
+        <br><br><br>
+        <p style="text-align: center; color: #555; font-size: 14px;">Este documento es un detalle informativo generado automáticamente.</p>
+    </div>
+
+    <script>
+        const daysInSpanish = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // --- UTILIDADES DE FORMATO NUMÉRICO ---
+        window.formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        window.parseNumber = (str) => parseInt(str.replace(/\./g, '')) || 0;
+
+        window.formatInputSueldo = function(input) {
+            let val = window.parseNumber(input.value);
+            input.value = window.formatNumber(val);
+            window.calculateSalary();
+        };
+
+        // --- CÁLCULO DE SUELDO Y DESCUENTOS ---
+        window.calculateSalary = function() {
+            let absentDays = 0;
+            // Solo contamos los que estén marcados explícitamente como "Ausente"
+            document.querySelectorAll('#tableBody select').forEach(select => {
+                if(select.value === 'Ausente') absentDays++;
+            });
+            
+            let sueldoBaseStr = document.getElementById('input-sueldo').value;
+            let sueldoBase = window.parseNumber(sueldoBaseStr);
+            
+            // Fórmula: Sueldo / 30 días comerciales para obtener el valor del día
+            let valorDia = Math.round(sueldoBase / 30); 
+            let descuento = absentDays * valorDia;
+            let total = sueldoBase - descuento;
+
+            // 1. Actualizar el recuadro de la vista principal
+            document.getElementById('live-ausentes').innerText = absentDays;
+            document.getElementById('live-descuento').innerText = window.formatNumber(descuento);
+            document.getElementById('live-total').innerText = window.formatNumber(total);
+
+            // 2. Actualizar los datos en el documento tipo Word (oculto)
+            document.getElementById('doc-mes').innerText = document.getElementById('displayMonth').value;
+            document.getElementById('doc-nombre').innerText = document.getElementById('input-nombre').value;
+            document.getElementById('doc-cargo').innerText = document.getElementById('input-cargo').value;
+            document.getElementById('doc-empresa').innerText = document.getElementById('input-empresa').value;
+            
+            document.getElementById('doc-sueldo-base').innerText = window.formatNumber(sueldoBase);
+            document.getElementById('doc-dias-ausentes').innerText = absentDays;
+            document.getElementById('doc-descuento').innerText = window.formatNumber(descuento);
+            document.getElementById('doc-total').innerText = window.formatNumber(total);
+        };
+
+        // --- FUNCIONES DE ASISTENCIA ---
+        window.toggleHighlight = function(checkbox, color) {
+            const tr = checkbox.closest('tr');
+            const yellowCb = tr.querySelector('.cb-yellow');
+            const redCb = tr.querySelector('.cb-red');
+
+            if (color === 'yellow' && checkbox.checked) {
+                if(redCb) redCb.checked = false;
+                tr.classList.remove('highlighted-red');
+                tr.classList.add('highlighted-yellow');
+            } else if (color === 'red' && checkbox.checked) {
+                if(yellowCb) yellowCb.checked = false;
+                tr.classList.remove('highlighted-yellow');
+                tr.classList.add('highlighted-red');
+            } else {
+                tr.classList.remove('highlighted-yellow', 'highlighted-red');
+            }
+            window.saveDataLocally(true);
+        };
+
+        window.handleMonthChange = function() {
+            const monthPicker = document.getElementById('monthPicker').value;
+            if (!monthPicker) return;
+
+            const [year, month] = monthPicker.split('-');
+            const date = new Date(year, month - 1, 1);
+            const totalDays = new Date(year, month, 0).getDate();
+            
+            document.getElementById('displayMonth').value = `${monthsInSpanish[date.getMonth()]} ${year}`;
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= totalDays; i++) {
+                const currentDate = new Date(year, month - 1, i);
+                const dayOfWeek = currentDate.getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                
+                const tr = document.createElement('tr');
+                if (isWeekend) tr.className = 'weekend';
+
+                const routeValue = isWeekend ? '-' : 'San Miguel';
+                
+                const statusOptions = `
+                    <option value="Presente" ${!isWeekend ? 'selected' : ''}>Presente</option>
+                    <option value="Descanso" ${isWeekend ? 'selected' : ''}>Descanso</option>
+                    <option value="Ausente">Ausente</option>
+                    <option value="Feriado">Feriado</option>
+                `;
+
+                tr.innerHTML = `
+                    <td class="export-hide" style="text-align: center; white-space: nowrap;">
+                        <input type="checkbox" onchange="window.toggleHighlight(this, 'yellow')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;" title="Subrayar Amarillo">
+                        <input type="checkbox" onchange="window.toggleHighlight(this, 'red')" class="row-checkbox cb-red" style="accent-color: red;" title="Subrayar Rojo">
+                    </td>
+                    <td>${String(i).padStart(2, '0')}-${month}</td>
+                    <td>${daysInSpanish[dayOfWeek]}</td>
+                    <td><div contenteditable="true" class="editable-cell" onblur="window.saveDataLocally(true)">${routeValue}</div></td>
+                    <td>
+                        <select onchange="window.saveDataLocally(true); window.calculateSalary()">
+                            ${statusOptions}
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            window.loadDataLocally(monthPicker);
+            window.calculateSalary();
+        };
+
+        // --- EXPORTACIÓN DE IMÁGENES ---
+        
+        // 1. Exportar la tabla de asistencia
+        window.exportToImage = function() {
+            const element = document.getElementById('document-container');
+            const btn = document.querySelector('.btn-export');
+            btn.innerText = "Generando...";
+            btn.style.backgroundColor = "#6c757d";
+
+            // Ocultar checkboxes y recuadro de sueldo en la foto de asistencia
+            const hideElements = document.querySelectorAll('.export-hide');
+            hideElements.forEach(el => el.style.display = 'none');
+
+            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Asistencia_${document.getElementById('displayMonth').value.replace(' ', '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                hideElements.forEach(el => el.style.display = '');
+                
+                btn.innerText = "Exportar Asistencia";
+                btn.style.backgroundColor = "#28a745";
+            });
+        };
+
+        // 2. Exportar el detalle de liquidación tipo Word
+        window.exportSalaryDetail = function() {
+            const element = document.getElementById('hidden-word-document');
+            const btn = document.querySelector('.btn-salary');
+            btn.innerText = "Generando...";
+            btn.style.backgroundColor = "#6c757d";
+
+            html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Liquidacion_${document.getElementById('displayMonth').value.replace(' ', '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerText = "Descargar Liquidación";
+                btn.style.backgroundColor = "#dc3545";
+            });
+        };
+
+        // --- SISTEMA DE GUARDADO LOCAL ---
+        window.saveDataLocally = function(isAutoSave = false) {
+            const monthPicker = document.getElementById('monthPicker').value;
+            if (!monthPicker) return;
+
+            const header = {
+                nombre: document.getElementById('input-nombre').value,
+                cargo: document.getElementById('input-cargo').value,
+                empresa: document.getElementById('input-empresa').value,
+                jornada: document.getElementById('input-jornada').value,
+                sueldo: document.getElementById('input-sueldo').value
+            };
+
+            const rows = [];
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                rows.push({
+                    checkYellow: tr.querySelector('.cb-yellow').checked,
+                    checkRed: tr.querySelector('.cb-red').checked,
+                    route: tr.querySelector('.editable-cell').innerText,
+                    status: tr.querySelector('select').value
+                });
+            });
+
+            localStorage.setItem('asistencia_' + monthPicker, JSON.stringify({ header, rows }));
+            document.getElementById('local-status').innerText = "💾 Guardado localmente";
+
+            if (!isAutoSave) {
+                const btnSave = document.getElementById('btn-save');
+                btnSave.innerText = "Guardado ✓";
+                btnSave.style.backgroundColor = "#17a2b8";
+                setTimeout(() => {
+                    btnSave.innerText = "Guardar";
+                    btnSave.style.backgroundColor = "#007bff";
+                }, 2000);
+            }
+        };
+
+        window.loadDataLocally = function(monthId) {
+            const savedData = localStorage.getItem('asistencia_' + monthId);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    if (data.header) {
+                        document.getElementById('input-nombre').value = data.header.nombre || '';
+                        document.getElementById('input-cargo').value = data.header.cargo || '';
+                        document.getElementById('input-empresa').value = data.header.empresa || '';
+                        document.getElementById('input-jornada').value = data.header.jornada || '';
+                        if(data.header.sueldo) document.getElementById('input-sueldo').value = data.header.sueldo;
+                    }
+                    if (data.rows) {
+                        const tableRows = document.querySelectorAll('#tableBody tr');
+                        data.rows.forEach((rowData, idx) => {
+                            if (tableRows[idx]) {
+                                const tr = tableRows[idx];
+                                const yellowCb = tr.querySelector('.cb-yellow');
+                                const redCb = tr.querySelector('.cb-red');
+                                
+                                if (rowData.checkYellow || rowData.checked) {
+                                    yellowCb.checked = true;
+                                    tr.classList.add('highlighted-yellow');
+                                }
+                                if (rowData.checkRed) {
+                                    redCb.checked = true;
+                                    tr.classList.add('highlighted-red');
+                                }
+                                
+                                tr.querySelector('.editable-cell').innerText = rowData.route || '';
+                                tr.querySelector('select').value = rowData.status || '';
+                            }
+                        });
+                    }
+                    document.getElementById('local-status').innerText = "💾 Datos cargados";
+                } catch(e) { console.error("Error leyendo datos:", e); }
+            } else {
+                document.getElementById('local-status').innerText = "💾 Listo para usar";
+            }
+            window.calculateSalary();
+        };
+
+        // --- INICIO AUTOMÁTICO ---
+        window.onload = function() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthPicker').value = `${year}-${month}`;
+            
+            window.handleMonthChange();
+        };
+    </script>
+</body>
+</html>
+
+
+```
