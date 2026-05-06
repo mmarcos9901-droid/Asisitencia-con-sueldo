@@ -35,6 +35,7 @@
             font-size: 18px;
             box-sizing: border-box;
             text-align: center;
+            background-color: white;
         }
         
         button {
@@ -48,6 +49,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             color: white;
             transition: background-color 0.2s;
+            -webkit-appearance: none; /* Mejora en iPhone */
         }
         button:active { opacity: 0.8; transform: scale(0.98); }
         
@@ -64,6 +66,7 @@
             padding: 8px;
             border-radius: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            word-wrap: break-word;
         }
 
         /* CONTENEDOR DEL DOCUMENTO */
@@ -85,7 +88,7 @@
             font-size: 18px;
         }
 
-        /* CABECERA (DATOS PERSONALES) ADAPTADA A MÓVIL */
+        /* CABECERA (DATOS PERSONALES) */
         .header-info {
             display: flex;
             flex-direction: column;
@@ -115,7 +118,7 @@
             min-width: 0;
         }
         
-        /* CONTENEDOR DE TABLA CON SCROLL HORIZONTAL PARA MÓVIL */
+        /* CONTENEDOR DE TABLA CON SCROLL HORIZONTAL */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -138,8 +141,6 @@
         }
         th {
             background-color: #f0f0f0;
-            position: sticky;
-            top: 0;
         }
         
         /* CELDAS EDITABLES Y SELECTS */
@@ -170,11 +171,13 @@
         }
 
         .btn-copy {
-            background-color: transparent;
-            border: none;
+            background-color: transparent !important;
+            border: none !important;
             padding: 10px !important;
             font-size: 24px !important;
             color: #6c757d;
+            box-shadow: none !important;
+            width: auto;
         }
 
         /* COLORES */
@@ -221,14 +224,15 @@
         }
     </style>
 </head>
-<body>
+<!-- EL BODY ONLOAD GARANTIZA QUE ARRANQUE SÍ O SÍ -->
+<body onload="iniciarAplicacion()">
 
     <div class="controls">
         <input type="month" id="monthPicker" onchange="handleMonthChange()">
-        <button class="btn-save" id="btn-save" onclick="window.saveDataLocally()">Guardar Avance</button>
+        <button class="btn-save" id="btn-save" onclick="saveDataLocally()">Guardar Avance</button>
         <button class="btn-export" onclick="exportToImage()">Exportar Asistencia</button>
         <button class="btn-salary" onclick="exportSalaryDetail()">Descargar Liquidación</button>
-        <span class="status-indicator" id="local-status">Cargando...</span>
+        <span class="status-indicator" id="local-status">Cargando la aplicación...</span>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL -->
@@ -242,23 +246,23 @@
             </div>
             <div class="header-line">
                 <strong>Nombre:</strong> 
-                <input type="text" id="input-nombre" value="Marcos Méndez" onblur="window.saveDataLocally(true); window.calculateSalary()">
+                <input type="text" id="input-nombre" value="Marcos Méndez" onblur="saveDataLocally(true); calculateSalary()">
             </div>
             <div class="header-line">
                 <strong>Cargo:</strong> 
-                <input type="text" id="input-cargo" value="Conductor" onblur="window.saveDataLocally(true); window.calculateSalary()">
+                <input type="text" id="input-cargo" value="Conductor" onblur="saveDataLocally(true); calculateSalary()">
             </div>
             <div class="header-line">
                 <strong>Empresa:</strong> 
-                <input type="text" id="input-empresa" value="Transportes Uribe" onblur="window.saveDataLocally(true); window.calculateSalary()">
+                <input type="text" id="input-empresa" value="Transportes Uribe" onblur="saveDataLocally(true); calculateSalary()">
             </div>
             <div class="header-line">
                 <strong>Jornada:</strong> 
-                <input type="text" id="input-jornada" value="Lunes a Viernes" onblur="window.saveDataLocally(true)">
+                <input type="text" id="input-jornada" value="Lunes a Viernes" onblur="saveDataLocally(true)">
             </div>
             <div class="header-line">
                 <strong>Sueldo Base:</strong> 
-                <input type="text" id="input-sueldo" value="800.000" onblur="window.formatInputSueldo(this); window.saveDataLocally(true)">
+                <input type="text" id="input-sueldo" value="800.000" onblur="formatInputSueldo(this); saveDataLocally(true)">
             </div>
         </div>
 
@@ -275,7 +279,7 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <!-- Filas generadas por JS -->
+                    <!-- Filas se generan por JS -->
                 </tbody>
             </table>
         </div>
@@ -324,19 +328,124 @@
     </div>
 
     <script>
+        // Declarar variables globales
         const daysInSpanish = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']; 
         const monthsInSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        window.formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        window.parseNumber = (str) => parseInt(str.replace(/\./g, '')) || 0;
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        function parseNumber(str) {
+            return parseInt(str.replace(/\./g, '')) || 0;
+        }
 
-        window.formatInputSueldo = function(input) {
-            let val = window.parseNumber(input.value);
-            input.value = window.formatNumber(val);
-            window.calculateSalary();
+        function formatInputSueldo(input) {
+            let val = parseNumber(input.value);
+            input.value = formatNumber(val);
+            calculateSalary();
+        }
+
+        // --- SISTEMA SEGURO DE MEMORIA ---
+        const SafeStorage = {
+            save: function(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                    return true;
+                } catch (e) {
+                    return false; // Falla silenciosamente si el celular bloquea la memoria
+                }
+            },
+            load: function(key) {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : null;
+                } catch (e) {
+                    return null;
+                }
+            }
         };
 
-        window.copyToNextRow = function(btn) {
+        // --- INICIO DE LA APLICACIÓN (Arranca desde el body onload) ---
+        function iniciarAplicacion() {
+            try {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                
+                const monthPicker = document.getElementById('monthPicker');
+                monthPicker.value = `${year}-${month}`;
+                
+                document.getElementById('local-status').innerText = "Iniciando tabla...";
+                handleMonthChange();
+            } catch (error) {
+                // Si algo falla, lo mostramos en la pantalla para saber qué es
+                document.getElementById('local-status').innerText = "Error: " + error.message;
+            }
+        }
+
+        function handleMonthChange() {
+            try {
+                const monthPicker = document.getElementById('monthPicker').value;
+                if (!monthPicker) return;
+
+                const parts = monthPicker.split('-');
+                const year = parseInt(parts[0]);
+                const month = parseInt(parts[1]);
+                
+                const totalDays = new Date(year, month, 0).getDate();
+                
+                document.getElementById('displayMonth').value = `${monthsInSpanish[month - 1]} ${year}`;
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+
+                for (let i = 1; i <= totalDays; i++) {
+                    const currentDate = new Date(year, month - 1, i);
+                    const dayOfWeek = currentDate.getDay();
+                    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                    
+                    const tr = document.createElement('tr');
+                    if (isWeekend) tr.className = 'weekend';
+
+                    const routeValue = isWeekend ? '-' : 'San Miguel';
+                    const statusOptions = `
+                        <option value="Presente" ${!isWeekend ? 'selected' : ''}>Presente</option>
+                        <option value="Descanso" ${isWeekend ? 'selected' : ''}>Descanso</option>
+                        <option value="Ausente">Ausente</option>
+                        <option value="Feriado">Feriado</option>
+                        <option value="Fuera de Santiago">Fuera Stgo</option>
+                    `;
+
+                    tr.innerHTML = `
+                        <td class="export-hide" style="text-align: center; white-space: nowrap;">
+                            <input type="checkbox" onchange="toggleHighlight(this, 'yellow')" class="row-checkbox cb-yellow" style="accent-color: #d4d000;">
+                            <input type="checkbox" onchange="toggleHighlight(this, 'red')" class="row-checkbox cb-red" style="accent-color: red;">
+                        </td>
+                        <td>${String(i).padStart(2, '0')}/${String(month).padStart(2, '0')}</td>
+                        <td>${daysInSpanish[dayOfWeek]}</td>
+                        <td><div contenteditable="true" class="editable-cell" onblur="saveDataLocally(true)">${routeValue}</div></td>
+                        <td>
+                            <select onchange="handleStatusChange(this)">${statusOptions}</select>
+                        </td>
+                        <td class="export-hide" style="text-align: center;">
+                            <button class="btn-copy" onclick="copyToNextRow(this)">⬇️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+
+                loadDataLocally(monthPicker);
+                calculateSalary();
+                document.getElementById('local-status').innerText = "Lista generada correctamente";
+                setTimeout(() => { document.getElementById('local-status').innerText = "✅ Listo para usar"; }, 2000);
+
+            } catch (error) {
+                document.getElementById('local-status').innerText = "Fallo en tabla: " + error.message;
+            }
+        }
+
+        // --- FUNCIONES DE INTERACCIÓN ---
+        function copyToNextRow(btn) {
             const currentTr = btn.closest('tr');
             const nextTr = currentTr.nextElementSibling;
             if (!nextTr) return; 
@@ -367,72 +476,11 @@
                 nextTr.classList.add('highlighted-red');
             }
             
-            window.saveDataLocally(true);
-            window.calculateSalary();
-        };
+            saveDataLocally(true);
+            calculateSalary();
+        }
 
-        window.calculateSalary = function() {
-            let absentDays = 0;
-            let outsideDays = 0;
-            let absentDates = []; 
-            
-            document.querySelectorAll('#tableBody tr').forEach(tr => {
-                const select = tr.querySelector('select');
-                if (select) {
-                    if(select.value === 'Ausente') {
-                        absentDays++;
-                        let fecha = tr.cells[1].innerText;
-                        absentDates.push(fecha);
-                    }
-                    if(select.value === 'Fuera de Santiago') { outsideDays++; }
-                }
-            });
-            
-            let sueldoBaseStr = document.getElementById('input-sueldo').value;
-            let sueldoBase = window.parseNumber(sueldoBaseStr);
-            
-            let valorDia = Math.round(sueldoBase / 30); 
-            let descuento = absentDays * valorDia;
-            let bono = outsideDays * 10000;
-            let total = sueldoBase - descuento + bono;
-
-            document.getElementById('live-ausentes').innerText = absentDays;
-            document.getElementById('live-descuento').innerText = window.formatNumber(descuento);
-            
-            const liveFechasContainer = document.getElementById('live-fechas-container');
-            if (absentDates.length > 0) {
-                document.getElementById('live-fechas-ausentes').innerText = absentDates.join(', ');
-                liveFechasContainer.style.display = 'block';
-            } else {
-                liveFechasContainer.style.display = 'none';
-            }
-
-            document.getElementById('live-fuera').innerText = outsideDays;
-            document.getElementById('live-bono').innerText = window.formatNumber(bono);
-            document.getElementById('live-total').innerText = window.formatNumber(total);
-
-            document.getElementById('doc-mes').innerText = document.getElementById('displayMonth').value;
-            document.getElementById('doc-nombre').innerText = document.getElementById('input-nombre').value;
-            document.getElementById('doc-cargo').innerText = document.getElementById('input-cargo').value;
-            document.getElementById('doc-empresa').innerText = document.getElementById('input-empresa').value;
-            document.getElementById('doc-sueldo-base').innerText = window.formatNumber(sueldoBase);
-            document.getElementById('doc-dias-ausentes').innerText = absentDays;
-            document.getElementById('doc-descuento').innerText = window.formatNumber(descuento);
-            
-            const docFechasContainer = document.getElementById('doc-fechas-container');
-            if (absentDates.length > 0) {
-                document.getElementById('doc-fechas-ausentes').innerText = absentDates.join(', ');
-                docFechasContainer.style.display = 'block';
-            } else {
-                docFechasContainer.style.display = 'none';
-            }
-
-            document.getElementById('doc-dias-fuera').innerText = outsideDays;
-            document.getElementById('doc-bono').innerText = window.formatNumber(bono);
-            document.getElementById('doc-total').innerText = window.formatNumber(total);
-        };
-
-        window.handleStatusChange = function(selectElement) {
+        function handleStatusChange(selectElement) {
             const tr = selectElement.closest('tr');
             if (selectElement.value === 'Fuera de Santiago') {
                 tr.classList.add('highlighted-green');
@@ -440,44 +488,4 @@
                 const redCb = tr.querySelector('.cb-red');
                 if (yellowCb) yellowCb.checked = false;
                 if (redCb) redCb.checked = false;
-                tr.classList.remove('highlighted-yellow', 'highlighted-red');
-            } else {
-                tr.classList.remove('highlighted-green');
-            }
-            window.saveDataLocally(true);
-            window.calculateSalary();
-        };
-
-        window.toggleHighlight = function(checkbox, color) {
-            const tr = checkbox.closest('tr');
-            const select = tr.querySelector('select');
-            const yellowCb = tr.querySelector('.cb-yellow');
-            const redCb = tr.querySelector('.cb-red');
-
-            if (color === 'yellow' && checkbox.checked) {
-                if(redCb) redCb.checked = false;
-                tr.classList.remove('highlighted-red', 'highlighted-green');
-                tr.classList.add('highlighted-yellow');
-            } else if (color === 'red' && checkbox.checked) {
-                if(yellowCb) yellowCb.checked = false;
-                tr.classList.remove('highlighted-yellow', 'highlighted-green');
-                tr.classList.add('highlighted-red');
-            } else {
-                tr.classList.remove('highlighted-yellow', 'highlighted-red');
-                if (select && select.value === 'Fuera de Santiago') {
-                    tr.classList.add('highlighted-green');
-                }
-            }
-            window.saveDataLocally(true);
-        };
-
-        window.handleMonthChange = function() {
-            try {
-                const monthPicker = document.getElementById('monthPicker').value;
-                if (!monthPicker) return;
-
-                const [year, month] = monthPicker.split('-');
-                const date = new Date(year, month - 1, 1);
-                const totalDays = new Date(year, month, 0).getDate();
-                
-                document.getEl
+    
